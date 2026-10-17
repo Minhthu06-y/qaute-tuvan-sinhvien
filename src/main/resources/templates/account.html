@@ -1,0 +1,23 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Thông tin tài khoản')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header><aside th:replace="~{fragments :: sidebar('account')}"></aside>
+<div class="page-shell"><main class="page-content">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div class="page-heading"><div><div class="eyebrow">Hồ sơ người dùng</div><h1>Thông tin tài khoản</h1><p class="heading-caption">Thông tin đăng nhập và các vai trò được gán trong hệ thống tư vấn QAUTE.</p></div><a class="btn btn-outline-primary btn-sm" th:href="@{/questions}"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a></div>
+  <div class="row g-4">
+    <div class="col-lg-4"><section class="panel h-100"><div class="p-4 text-center"><div class="account-avatar" th:text="${#strings.substring(currentUser.displayName,0,1)}">N</div><h2 class="account-name" th:text="${currentUser.displayName}">Nguyễn Minh Thư</h2><p class="account-title" th:text="${currentUser.title}">Tư vấn viên khoa CNTT</p><span class="status-badge status-answered"><i class="bi bi-check-circle-fill"></i> Đang hoạt động</span></div><div class="account-id"><span>Mã tài khoản</span><strong th:text="${accountNumber}">QA-000001</strong></div></section></div>
+    <div class="col-lg-8"><section class="panel"><div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-person-lines-fill"></i>Thông tin cá nhân</h2><div class="panel-subtitle">Thông tin đang lưu trong tài khoản đăng nhập</div></div><i class="bi bi-shield-lock text-success fs-5"></i></div>
+      <div class="account-details">
+        <div class="account-field"><span><i class="bi bi-person me-2"></i>Họ và tên</span><strong th:text="${currentUser.displayName}">Nguyễn Minh Thư</strong></div>
+        <div class="account-field"><span><i class="bi bi-envelope me-2"></i>Email đăng nhập</span><strong th:text="${currentUser.email}">tuvanvien@qaute.edu.vn</strong></div>
+        <div class="account-field"><span><i class="bi bi-building me-2"></i>Khoa / đơn vị</span><strong th:text="${currentUser.faculty != null ? currentUser.faculty.name : 'Chưa chọn khoa'}">Khoa Công Nghệ Thông Tin</strong></div>
+        <div class="account-field"><span><i class="bi bi-tags me-2"></i>Chuyên đề phụ trách</span><strong th:text="${assignedTopicsLabel}">Chương trình đào tạo · Đồ án</strong></div>
+        <div class="account-field"><span><i class="bi bi-card-text me-2"></i>Mã sinh viên</span><strong th:text="${!#strings.isEmpty(currentUser.studentCode) ? currentUser.studentCode : 'Chưa cập nhật'}">24133061</strong></div>
+        <div class="account-field"><span><i class="bi bi-person-gear me-2"></i>Vai trò đang dùng</span><strong class="text-primary" th:text="${activeRoleLabel}">Tư vấn viên</strong></div>
+      </div>
+    </section>
+    <section class="panel mt-4"><div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-person-badge"></i>Vai trò của tài khoản</h2><div class="panel-subtitle">Tài khoản có thể tham gia nhiều vai trò; vai trò demo đổi ở sidebar</div></div></div>
+      <div class="account-roles"><span th:each="role : ${accountRoles}" class="account-role" th:classappend="${role.active ? 'active' : ''}"><i th:class="${role.active ? 'bi bi-check-circle-fill' : 'bi bi-person-check'}"></i><span th:text="${role.label}">Sinh viên</span><small th:if="${role.active}">Đang dùng</small></span></div>
+    </section></div>
+  </div>
+</main><div th:replace="~{fragments :: footer}"></div></div><div th:replace="~{fragments :: scripts}"></div></body></html>
