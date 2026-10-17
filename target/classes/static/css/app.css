@@ -1,0 +1,21 @@
+body {
+    min-height: 100vh;
+}
+
+.form-card {
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.question-card {
+    transition: box-shadow .2s ease;
+}
+
+.question-card:hover {
+    box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .08);
+}
+
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
