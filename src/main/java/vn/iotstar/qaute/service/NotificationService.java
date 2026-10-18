@@ -1,27 +1,67 @@
-﻿package vn.iotstar.qaute.service;
+package vn.iotstar.qaute.service;
 
-import vn.iotstar.qaute.entity.*;
-import vn.iotstar.qaute.repository.NotificationRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
+import java.util.List;
 import java.util.Map;
 
-@Service
-@RequiredArgsConstructor
-public class NotificationService {
-    private final NotificationRepository repo;
-    private final SimpMessagingTemplate ws;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-    /** Lưu DB + đẩy realtime. Client subscribe: /user/queue/notifications */
+import vn.iotstar.qaute.entity.Notification;
+import vn.iotstar.qaute.entity.User;
+import vn.iotstar.qaute.repository.NotificationRepository;
+
+@Service
+public class NotificationService {
+    private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public NotificationService(
+        NotificationRepository notificationRepository,
+        SimpMessagingTemplate messagingTemplate
+    ) {
+        this.notificationRepository = notificationRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @Transactional
     public void notify(User receiver, String message, String link) {
-        Notification n = new Notification();
-        n.setReceiver(receiver);
-        n.setMessage(message);
-        n.setLink(link);
-        repo.save(n);
-        ws.convertAndSendToUser(receiver.getEmail(), "/queue/notifications",
-                Map.of("id", n.getId(), "message", message, "link", link == null ? "" : link));
+        Notification notification = new Notification();
+        notification.setReceiver(receiver);
+        notification.setMessage(message);
+        notification.setLink(link);
+        notificationRepository.save(notification);
+
+        messagingTemplate.convertAndSendToUser(
+            receiver.getEmail(),
+            "/queue/notifications",
+            Map.of(
+                "id", notification.getId(),
+                "message", message,
+                "link", link == null ? "" : link
+            )
+        );
+    }
+
+    @Transactional
+    public void sendAnnouncement(String title, String content) {
+        Notification notification = new Notification();
+        notification.setTitle(title.trim());
+        notification.setContent(content.trim());
+        notificationRepository.save(notification);
+
+        messagingTemplate.convertAndSend(
+            "/topic/announcements",
+            new AnnouncementMessage(title.trim(), content.trim())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<Notification> getAnnouncements() {
+        return notificationRepository.findByReceiverIsNullOrderByCreatedAtDesc();
+    }
+
+    public record AnnouncementMessage(String title, String content) {
     }
 }
 

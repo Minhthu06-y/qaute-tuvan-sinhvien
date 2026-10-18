@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
+import vn.iotstar.qaute.enums.UserStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,8 @@ public class ManagerAccountService {
         u.setFullName(f.getFullName().trim());
         u.setPasswordHash(encoder.encode(f.getPassword()));
         u.setRole(Role.MANAGER);
+        u.setStatus(UserStatus.ACTIVE);
+        u.setEnabled(true);
         u.setManagedDepartments(new HashSet<>(departments.findAllById(f.getDepartmentIds())));
         users.save(u);
         logs.log(actor, "ADMIN", "CREATE_MANAGER", u.getEmail());

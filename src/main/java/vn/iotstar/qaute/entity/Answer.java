@@ -1,20 +1,89 @@
-﻿package vn.iotstar.qaute.entity;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.Nationalized;
-import java.time.LocalDateTime;
-import java.util.*;
+package vn.iotstar.qaute.entity;
 
-// [SHARED] Người 2 sở hữu. Người 3 chỉ dùng needApproval/approvalStatus/published
-@Entity @Getter @Setter @NoArgsConstructor
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.Nationalized;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "answers")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Answer {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(optional = false) private Question question;
-    @ManyToOne(optional = false) private User advisor;
-    @Nationalized @Column(columnDefinition = "NVARCHAR(MAX)") private String content;
-    private boolean needApproval = false;
-    @Enumerated(EnumType.STRING) private ApprovalStatus approvalStatus = ApprovalStatus.NONE;
-    private boolean published = true;   // false khi đang chờ duyệt / bị từ chối
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "advisor_id")
+    private User advisor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User author;
+
+    @Nationalized
+    @Column(nullable = false, columnDefinition = "nvarchar(max)")
+    private String content;
+
+    private boolean needApproval;
+
+    @Enumerated(EnumType.STRING)
+    private ApprovalStatus approvalStatus = ApprovalStatus.NONE;
+
+    @Column(nullable = false)
+    private boolean published = true;
+
+    @Column(nullable = false)
+    private boolean approved;
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Registration branch calls the answer owner an author and checks approved.
+    public User getAuthor() {
+        return author != null ? author : advisor;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
+        this.advisor = author;
+    }
+
+    public boolean isApproved() {
+        return approved || published;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+        this.published = approved;
+    }
+
+    public User getAdvisor() {
+        return advisor != null ? advisor : author;
+    }
+
+    public void setAdvisor(User advisor) {
+        this.advisor = advisor;
+        this.author = advisor;
+    }
+
+    public boolean isPublished() {
+        return published || approved;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
+        this.approved = published;
+    }
 }
 

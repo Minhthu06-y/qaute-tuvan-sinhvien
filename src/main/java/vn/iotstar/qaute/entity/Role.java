@@ -1,3 +1,9 @@
-﻿package vn.iotstar.qaute.entity;
-public enum Role { USER, ADMIN, MANAGER }
+package vn.iotstar.qaute.entity;
+
+public enum Role {
+    USER,
+    CONSULTANT,
+    MANAGER,
+    ADMIN
+}
 

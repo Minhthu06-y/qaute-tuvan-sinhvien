@@ -1,3 +1,9 @@
-﻿package vn.iotstar.qaute.entity;
-public enum QuestionStatus { UNANSWERED, ANSWERED, LOCKED }
+package vn.iotstar.qaute.entity;
+
+public enum QuestionStatus {
+    UNANSWERED,
+    ANSWERED,
+    TRANSFERRED,
+    LOCKED
+}
 

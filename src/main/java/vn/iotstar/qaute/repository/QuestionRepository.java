@@ -1,18 +1,54 @@
-﻿package vn.iotstar.qaute.repository;
-import vn.iotstar.qaute.entity.*;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
+package vn.iotstar.qaute.repository;
+
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import vn.iotstar.qaute.entity.Question;
+import vn.iotstar.qaute.entity.QuestionStatus;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
-    /** DÙNG CHO TRANG CÔNG KHAI (khách chưa đăng nhập): chỉ câu hỏi được public. */
+    @Query("""
+        select q from Question q
+        where q.publicVisible = true or q.publicQuestion = true
+        order by q.createdAt desc
+        """)
     List<Question> findByPublicVisibleTrueOrderByCreatedAtDesc();
-    List<Question> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
-    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
-    long countByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(QuestionStatus s, LocalDateTime from, LocalDateTime to);
+
+    @Query("""
+        select q from Question q
+        left join q.asker asker
+        left join q.author author
+        where asker.id = :userId or author.id = :userId
+        order by q.createdAt desc
+        """)
+    List<Question> findByAsker_IdOrderByCreatedAtDesc(
+        @Param("userId") Long userId
+    );
+
+    List<Question> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        LocalDateTime from,
+        LocalDateTime to
+    );
+
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        LocalDateTime from,
+        LocalDateTime to
+    );
+
+    long countByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        QuestionStatus status,
+        LocalDateTime from,
+        LocalDateTime to
+    );
+
     @Query("select q.createdAt from Question q where q.createdAt >= :from and q.createdAt < :to")
-    List<LocalDateTime> createdTimes(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+    List<LocalDateTime> createdTimes(
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to
+    );
 }
 

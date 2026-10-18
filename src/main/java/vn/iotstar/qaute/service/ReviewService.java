@@ -36,7 +36,7 @@ public class ReviewService {
         return a;
     }
 
-    public List<Answer> thread(Answer a) { return answers.findByQuestionIdOrderByCreatedAtAsc(a.getQuestion().getId()); }
+    public List<Answer> thread(Answer a) { return answers.findByQuestion_IdOrderByCreatedAtAsc(a.getQuestion().getId()); }
 
     public List<AnswerReview> history(Long answerId) { return reviews.findByAnswerIdOrderByCreatedAtDesc(answerId); }
 

@@ -45,6 +45,6 @@ public class QuestionBrowseService {
         return q;
     }
 
-    public List<Answer> thread(Long questionId) { return answers.findByQuestionIdOrderByCreatedAtAsc(questionId); }
+    public List<Answer> thread(Long questionId) { return answers.findByQuestion_IdOrderByCreatedAtAsc(questionId); }
 }
 

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import vn.iotstar.qaute.enums.UserStatus;
 
 /** Chỉ để chạy thử. Admin mặc định: admin@qaute.local / Admin@123 (ĐỔI trước khi nộp). */
 @Component
@@ -28,6 +29,7 @@ public class DataSeeder implements CommandLineRunner {
             User a = new User();
             a.setEmail("admin@qaute.local"); a.setFullName("Quản trị viên");
             a.setPasswordHash(encoder.encode("Admin@123")); a.setRole(Role.ADMIN);
+            a.setStatus(UserStatus.ACTIVE); a.setEnabled(true);
             users.save(a);
         }
     }
