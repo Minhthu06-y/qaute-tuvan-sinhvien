@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${title} + ' | QAUTE Admin'">QAUTE Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<aside th:fragment="sidebar(active)" class="admin-sidebar" th:with="managerMode=${base == '/manager'}">
+  <a class="admin-brand" th:href="@{${managerMode ? '/manager/dashboard' : '/admin/dashboard'}}"><span class="admin-brand-icon"><i class="bi bi-mortarboard-fill"></i></span><span>QAUTE<small>QUẢN TRỊ HỆ THỐNG</small></span></a>
+  <div class="admin-profile"><span class="admin-avatar" th:text="${managerMode ? 'M' : 'A'}">A</span><span><strong th:text="${managerMode ? 'Trưởng ban cố vấn' : 'Quản trị viên'}">Quản trị viên</strong><small th:text="${managerMode ? 'MANAGER' : 'ADMIN'}">ADMIN</small></span></div>
+  <nav class="admin-nav">
+    <span class="admin-nav-label">TỔNG QUAN</span>
+    <a th:href="@{${managerMode ? '/manager/dashboard' : '/admin/dashboard'}}" th:classappend="${active == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid-1x2"></i>Tổng quan</a>
+    <a th:if="${managerMode}" th:href="@{/manager/questions}" th:classappend="${active == 'questions' ? 'active' : ''}"><i class="bi bi-chat-left-text"></i>Tất cả câu hỏi</a>
+    <a th:unless="${managerMode}" th:href="@{/admin/student-questions}" th:classappend="${active == 'questions' ? 'active' : ''}"><i class="bi bi-chat-left-text"></i>Quản lý câu hỏi</a>
+    <span th:if="${managerMode}" class="admin-nav-label">TƯ VẤN</span>
+    <a th:if="${managerMode}" th:href="@{/manager/reviews}" th:classappend="${active == 'reviews' ? 'active' : ''}"><i class="bi bi-check2-square"></i>Duyệt câu trả lời</a>
+    <a th:if="${managerMode}" th:href="@{/manager/heads}" th:classappend="${active == 'heads' ? 'active' : ''}"><i class="bi bi-people"></i>Đầu mối tư vấn</a>
+    <span th:unless="${managerMode}" class="admin-nav-label">TÀI KHOẢN & ĐỘI NGŨ</span>
+    <a th:unless="${managerMode}" th:href="@{/admin/accounts}" th:classappend="${active == 'accounts' ? 'active' : ''}"><i class="bi bi-person-vcard"></i>Quản lý tài khoản</a>
+    <a th:unless="${managerMode}" th:href="@{/admin/advisors}" th:classappend="${active == 'advisors' ? 'active' : ''}"><i class="bi bi-person-lines-fill"></i>Tư vấn viên</a>
+    <a th:unless="${managerMode}" th:href="@{/admin/managers}" th:classappend="${active == 'managers' ? 'active' : ''}"><i class="bi bi-people"></i>Quản lý khoa</a>
+    <span th:unless="${managerMode}" class="admin-nav-label">HỆ THỐNG</span>
+    <a th:unless="${managerMode}" th:href="@{/admin/logs}" th:classappend="${active == 'logs' ? 'active' : ''}"><i class="bi bi-clock-history"></i>Nhật ký hoạt động</a>
+    <a th:href="@{/report/export(period='week')}"><i class="bi bi-file-earmark-arrow-down"></i>Tải báo cáo Excel</a>
+  </nav>
+  <div class="admin-sidebar-bottom"><a th:href="@{/questions}"><i class="bi bi-box-arrow-up-right"></i><span th:text="${managerMode ? 'Hộp câu hỏi sinh viên' : 'Về giao diện tư vấn'}">Về giao diện tư vấn</span></a></div>
+</aside>
+<header th:fragment="topbar">
+  <div class="admin-topbar"><div><span class="admin-topbar-eyebrow" th:text="${base == '/manager' ? 'KHU VỰC TRƯỞNG BAN CỐ VẤN' : 'KHU VỰC QUẢN TRỊ'}">KHU VỰC QUẢN TRỊ</span><strong>QAUTE · Hệ thống tư vấn sinh viên</strong></div>
+    <form th:action="@{/logout}" method="post"><button class="admin-logout" type="submit"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button></form>
+  </div>
+</header>
+<div th:fragment="alerts" class="admin-alerts">
+  <div th:if="${msg}" class="alert alert-success py-2" th:text="${msg}"></div>
+  <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
+</div>
+</body>
+</html>

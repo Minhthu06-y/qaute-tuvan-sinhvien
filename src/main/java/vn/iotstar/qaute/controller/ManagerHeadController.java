@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.controller;
+package vn.iotstar.qaute.controller;
 
 import vn.iotstar.qaute.service.*;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ public class ManagerHeadController {
 
     @GetMapping
     public String page(Principal p, Model m) {
+        m.addAttribute("base", "/manager");
         m.addAttribute("advisors", advisors.inDepartments(scope.managerDepartments(p.getName())));
         return "manager/heads";
     }
@@ -28,8 +29,8 @@ public class ManagerHeadController {
     public String toggle(@PathVariable Long id, Principal p, RedirectAttributes ra) {
         try {
             boolean now = advisors.toggleHead(id, p.getName(), "MANAGER", scope.managerDepartments(p.getName()));
-            ra.addFlashAttribute("msg", now ? "Đã chỉ định trưởng chuyên viên tư vấn" : "Đã gỡ chức trưởng chuyên viên");
-        } catch (IllegalArgumentException e) { ra.addFlashAttribute("err", e.getMessage()); }
+            ra.addFlashAttribute("msg", now ? "Đã chỉ định đầu mối tư vấn" : "Đã gỡ phân công đầu mối tư vấn");
+        } catch (IllegalArgumentException e) { ra.addFlashAttribute("error", e.getMessage()); }
         return "redirect:/manager/heads";
     }
 }

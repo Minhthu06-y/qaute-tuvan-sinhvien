@@ -1,39 +1,31 @@
-﻿package vn.iotstar.qaute.service;
+package vn.iotstar.qaute.service;
 
 import vn.iotstar.qaute.dto.ReviewForm;
 import vn.iotstar.qaute.entity.*;
 import vn.iotstar.qaute.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
-    private final AnswerRepository answers;
+    private final QauteAnswerRepository answers;
     private final AnswerReviewRepository reviews;
     private final UserRepository users;
     private final NotificationService notifier;
     private final ActivityLogService logs;
-    private final ScopeService scope;
 
-    /** Chỉ các câu trả lời thuộc khoa Manager phụ trách (chưa gán khoa => không thấy gì). */
+    /** Trưởng ban cố vấn duyệt câu trả lời trên toàn hệ thống. */
     public List<Answer> listByStatus(ApprovalStatus status, String managerEmail) {
-        Set<Long> depts = scope.managerDepartments(managerEmail);
-        return answers.findByStatus(status).stream()
-                .filter(a -> ScopeService.allows(depts, a.getQuestion().getDepartment())).toList();
+        return answers.findByStatus(status);
     }
 
-    /** Lấy câu trả lời có kiểm tra phạm vi khoa -> chặn nhập URL/ID của khoa khác (403). */
+    /** Lấy câu trả lời bất kỳ để trưởng ban cố vấn duyệt trên toàn hệ thống. */
     public Answer getForManager(Long id, String managerEmail) {
-        Answer a = answers.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu trả lời"));
-        if (!ScopeService.allows(scope.managerDepartments(managerEmail), a.getQuestion().getDepartment()))
-            throw new AccessDeniedException("Câu trả lời không thuộc khoa bạn phụ trách");
-        return a;
+        return answers.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu trả lời"));
     }
 
     public List<Answer> thread(Answer a) { return answers.findByQuestion_IdOrderByCreatedAtAsc(a.getQuestion().getId()); }

@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.HttpStatus;
 import vn.iotstar.model.*;
 import vn.iotstar.repository.*;
+import vn.iotstar.service.AdvisorPresenceService;
 import vn.iotstar.service.CloudinaryStorageService;
 import vn.iotstar.service.NotificationService;
 import vn.iotstar.service.SessionContext;
@@ -29,44 +30,80 @@ public class QuestionController {
     private final SessionContext sessionContext;
     private final NotificationService notifications;
     private final CloudinaryStorageService cloudinary;
+    private final UserAccountRepository users;
+    private final AdvisorPresenceService advisorPresence;
 
     public QuestionController(QuestionRepository questions, AnswerRepository answers, FacultyRepository faculties, FacultyTopicRepository topics,
             QuestionTransferRepository transfers, SessionContext sessionContext, NotificationService notifications,
-            CloudinaryStorageService cloudinary) {
+            CloudinaryStorageService cloudinary, UserAccountRepository users, AdvisorPresenceService advisorPresence) {
         this.questions = questions; this.answers = answers; this.faculties = faculties; this.topics = topics; this.transfers = transfers;
         this.sessionContext = sessionContext; this.notifications = notifications; this.cloudinary = cloudinary;
+        this.users = users; this.advisorPresence = advisorPresence;
     }
 
-    @GetMapping({"/", "/questions"}) public String dashboard(@RequestParam(required = false) Long topicId, HttpSession session, Model model) {
+    @GetMapping("/questions") public String dashboard(@RequestParam(required = false) Long facultyId,
+            @RequestParam(required = false) Long topicId, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         List<Question> all;
-        if (viewer.isStudent()) all = questions.findByAskerIdOrderByCreatedAtDesc(viewer.user().getId());
-        else {
-            all = questions.findByFacultyIdAndLockedFalseOrderByCreatedAtDesc(viewer.user().getFaculty().getId());
-            if (!viewer.isManager()) all = all.stream().filter(question -> canHandle(viewer, question)).toList();
-        }
-        List<FacultyTopic> availableTopics = viewer.isStudent() ? List.of()
-                : viewer.isManager() ? topics.findByFacultyIdOrderByIdAsc(viewer.user().getFaculty().getId())
-                : viewer.user().getAssignedTopics().stream()
-                        .filter(topic -> topic.getFaculty().getId().equals(viewer.user().getFaculty().getId()))
-                        .sorted(java.util.Comparator.comparing(FacultyTopic::getId)).toList();
+        List<FacultyTopic> availableTopics;
+        Long selectedFacultyId = null;
         Long selectedTopicId = null;
-        if (topicId != null && availableTopics.stream().anyMatch(topic -> topic.getId().equals(topicId))) {
-            selectedTopicId = topicId;
-            all = all.stream().filter(question -> question.getTopic() != null && question.getTopic().getId().equals(topicId)).toList();
+        if (viewer.isStudent()) {
+            all = questions.findByAskerIdOrderByCreatedAtDesc(viewer.user().getId());
+            availableTopics = List.of();
+        } else if (viewer.isManager()) {
+            selectedFacultyId = facultyId != null && faculties.existsById(facultyId) ? facultyId : null;
+            availableTopics = selectedFacultyId == null ? topics.findAllByOrderByFacultyIdAscIdAsc()
+                    : topics.findByFacultyIdOrderByIdAsc(selectedFacultyId);
+            all = questions.findAllByOrderByCreatedAtDesc();
+            if (selectedFacultyId != null) {
+                Long selectedId = selectedFacultyId;
+                all = all.stream().filter(question -> question.getFaculty() != null
+                        && question.getFaculty().getId().equals(selectedId)).toList();
+            }
+            if (topicId != null && availableTopics.stream().anyMatch(topic -> topic.getId().equals(topicId))) {
+                selectedTopicId = topicId;
+                all = all.stream().filter(question -> question.getTopic() != null
+                        && question.getTopic().getId().equals(topicId)).toList();
+            }
+        } else {
+            all = questions.findByFacultyIdAndLockedFalseOrderByCreatedAtDesc(viewer.user().getFaculty().getId());
+            all = all.stream().filter(question -> canHandle(viewer, question)).toList();
+            availableTopics = viewer.user().getAssignedTopics().stream()
+                    .filter(topic -> topic.getFaculty().getId().equals(viewer.user().getFaculty().getId()))
+                    .sorted(java.util.Comparator.comparing(FacultyTopic::getId)).toList();
         }
         List<Question> unanswered = all.stream().filter(q -> q.getStatus() == QuestionStatus.OPEN).toList();
         List<Question> answered = all.stream().filter(q -> q.getStatus() == QuestionStatus.ANSWERED).toList();
         model.addAttribute("unanswered", unanswered);
         model.addAttribute("answered", answered);
+        model.addAttribute("studentQuestions", all);
         model.addAttribute("topics", availableTopics);
         model.addAttribute("selectedTopicId", selectedTopicId);
         List<Question> transferred = viewer.isManager()
-                ? questions.findByFacultyIdOrderByCreatedAtDesc(viewer.user().getFaculty().getId()).stream().filter(q -> q.getStatus() == QuestionStatus.TRANSFERRED).toList()
+                ? all.stream().filter(q -> q.getStatus() == QuestionStatus.TRANSFERRED).toList()
                 : List.of();
         model.addAttribute("transferred", transferred);
-        model.addAttribute("pendingCount", viewer.isManager() ? answers.findByApprovalStatusAndQuestionFacultyIdOrderByCreatedAtAsc(ApprovalStatus.PENDING, viewer.user().getFaculty().getId()).size() : 0);
+        model.addAttribute("pendingCount", viewer.isManager() ? answers.findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus.PENDING).size() : 0);
         model.addAttribute("facultyCount", faculties.count());
+        model.addAttribute("faculties", viewer.isManager() ? faculties.findAll() : List.of());
+        model.addAttribute("selectedFacultyId", selectedFacultyId);
+        if (viewer.isStudent()) {
+            List<Faculty> allFaculties = faculties.findAll();
+            List<FacultyTopic> allTopics = topics.findAllByOrderByFacultyIdAscIdAsc();
+            List<AdvisorPresenceView> consultants = users.findAll().stream()
+                    .filter(user -> user.hasRole(AccountRole.ADVISOR) || user.hasRole(AccountRole.LECTURER) || user.hasRole(AccountRole.STAFF))
+                    .filter(user -> user.getFaculty() != null)
+                    .map(user -> new AdvisorPresenceView(user.getFaculty().getId(), user.getDisplayName(), user.getTitle(),
+                            advisorPresence.isOnline(user.getId())))
+                    .toList();
+            List<UnitDirectoryView> unitDirectory = allFaculties.stream()
+                    .map(faculty -> new UnitDirectoryView(faculty,
+                            allTopics.stream().filter(topic -> topic.getFaculty().getId().equals(faculty.getId())).toList(),
+                            consultants.stream().filter(consultant -> consultant.facultyId().equals(faculty.getId())).toList()))
+                    .toList();
+            model.addAttribute("unitDirectory", unitDirectory);
+        }
         return "questions";
     }
 
@@ -102,16 +139,43 @@ public class QuestionController {
         return "redirect:/questions/" + question.getId();
     }
 
-    @GetMapping("/questions/public") public String publicQuestions(HttpSession session, Model model) {
+    @GetMapping("/questions/public") public String publicQuestions(@RequestParam(required = false) Long facultyId,
+            @RequestParam(required = false) Long topicId, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
-        if (viewer.user().getFaculty() == null) model.addAttribute("publicQuestions", List.of());
-        else {
-            List<Question> publicQuestions = questions.findByFacultyIdAndIsPublicTrueOrderByCreatedAtDesc(viewer.user().getFaculty().getId());
-            if (viewer.isAdvisor()) publicQuestions = publicQuestions.stream().filter(question -> canHandle(viewer, question)).toList();
-            model.addAttribute("publicQuestions", publicQuestions);
+        Faculty selectedFaculty = null;
+        if (viewer.isStudent()) {
+            selectedFaculty = facultyId == null ? null : faculties.findById(facultyId).orElse(null);
+        } else {
+            selectedFaculty = viewer.user().getFaculty();
         }
+        FacultyTopic selectedTopic = topicId == null ? null : topics.findById(topicId).orElse(null);
+        if (selectedTopic != null && selectedFaculty == null) {
+            if (viewer.isStudent()) selectedFaculty = selectedTopic.getFaculty();
+            else selectedTopic = null;
+        }
+        if (selectedTopic != null && selectedFaculty != null
+                && !selectedTopic.getFaculty().getId().equals(selectedFaculty.getId())) {
+            selectedTopic = null;
+        }
+        List<Question> publicQuestions = selectedFaculty == null
+                ? viewer.isStudent() ? questions.findByIsPublicTrueOrderByCreatedAtDesc() : List.of()
+                : questions.findByFacultyIdAndIsPublicTrueOrderByCreatedAtDesc(selectedFaculty.getId());
+        if (selectedTopic != null) {
+            Long selectedId = selectedTopic.getId();
+            publicQuestions = publicQuestions.stream().filter(question -> question.getTopic() != null
+                    && question.getTopic().getId().equals(selectedId)).toList();
+        }
+        if (viewer.isAdvisor()) publicQuestions = publicQuestions.stream().filter(question -> canHandle(viewer, question)).toList();
+        model.addAttribute("publicQuestions", publicQuestions);
+        model.addAttribute("publicFaculties", faculties.findAll());
+        model.addAttribute("selectedFaculty", selectedFaculty);
+        model.addAttribute("selectedTopic", selectedTopic);
+        model.addAttribute("publicTopics", selectedFaculty == null ? List.of() : topics.findByFacultyIdOrderByIdAsc(selectedFaculty.getId()));
         return "public-questions";
     }
+
+    public record AdvisorPresenceView(Long facultyId, String name, String title, boolean online) {}
+    public record UnitDirectoryView(Faculty faculty, List<FacultyTopic> topics, List<AdvisorPresenceView> consultants) {}
 
     @GetMapping("/questions/{id}") public String detail(@PathVariable Long id, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
@@ -124,6 +188,9 @@ public class QuestionController {
         model.addAttribute("faculties", faculties.findAll());
         model.addAttribute("topics", topics.findAllByOrderByFacultyIdAscIdAsc());
         model.addAttribute("canManageQuestion", (viewer.isAdvisor() || viewer.isManager()) && canHandle(viewer, question) && !question.isLocked());
+        model.addAttribute("canAnswerQuestion", !question.isLocked()
+                ? viewer.isManager() || (viewer.isAdvisor() && canHandle(viewer, question))
+                : viewer.isManager());
         return "question-detail";
     }
 
@@ -131,16 +198,19 @@ public class QuestionController {
             @RequestParam(defaultValue = "false") boolean requestApproval, HttpSession session, RedirectAttributes flash) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        ensureCanManage(viewer, question);
-        if (question.isLocked()) { flash.addFlashAttribute("error", "Câu hỏi đã khóa do chuyển khoa, không thể trả lời."); return "redirect:/questions/" + id; }
+        ensureCanAnswer(viewer, question);
+        if (question.isLocked() && !viewer.isManager()) { flash.addFlashAttribute("error", "Câu hỏi đã khóa do chuyển khoa, không thể trả lời."); return "redirect:/questions/" + id; }
         if (body.isBlank()) { flash.addFlashAttribute("error", "Nội dung trả lời không được để trống."); return "redirect:/questions/" + id; }
-        ApprovalStatus status = requestApproval ? ApprovalStatus.PENDING : ApprovalStatus.NOT_REQUIRED;
+        boolean approvalRequired = viewer.isAdvisor() && requestApproval;
+        ApprovalStatus status = approvalRequired ? ApprovalStatus.PENDING : ApprovalStatus.NOT_REQUIRED;
         answers.save(new Answer(question, viewer.user(), body.trim(), LocalDateTime.now(), status));
-        if (requestApproval) {
-            notifications.notifyManagers(question.getFaculty().getId(), "approval", "Có câu trả lời cần trưởng nhóm duyệt.", question.getId());
+        if (approvalRequired) {
+            notifications.notifyManagers(question.getFaculty().getId(), "approval", "Có câu trả lời cần trưởng ban cố vấn duyệt.", question.getId());
             flash.addFlashAttribute("success", "Đã gửi câu trả lời để quản lý duyệt.");
         } else {
-            question.setStatus(QuestionStatus.ANSWERED); question.setReplyNotification(true); questions.save(question);
+            question.setStatus(QuestionStatus.ANSWERED); question.setReplyNotification(true);
+            if (viewer.isManager()) question.setLocked(false);
+            questions.save(question);
             notifications.notifyUser(question.getAsker().getId(), "reply", "Câu hỏi của bạn vừa có tư vấn viên phản hồi.", question.getId());
             flash.addFlashAttribute("success", "Đã gửi câu trả lời và thông báo cho người hỏi.");
         }
@@ -177,7 +247,8 @@ public class QuestionController {
 
     private void ensureCanView(SessionContext.Viewer viewer, Question question) {
         boolean owner = question.getAsker().getId().equals(viewer.user().getId());
-        if (viewer.isManager() || viewer.isAdvisor()) {
+        if (viewer.isManager()) return;
+        if (viewer.isAdvisor()) {
             if (!canHandle(viewer, question)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         } else if (!owner && !question.isPublic()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
@@ -185,6 +256,11 @@ public class QuestionController {
     }
     private void ensureCanManage(SessionContext.Viewer viewer, Question question) {
         if (!(viewer.isAdvisor() || viewer.isManager()) || !canHandle(viewer, question))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+    private void ensureCanAnswer(SessionContext.Viewer viewer, Question question) {
+        if (viewer.isManager()) return;
+        if (!viewer.isAdvisor() || !canHandle(viewer, question))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
     private boolean canHandle(SessionContext.Viewer viewer, Question question) {

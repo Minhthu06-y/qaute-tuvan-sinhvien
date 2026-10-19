@@ -12,29 +12,37 @@ import vn.iotstar.qaute.entity.User;
 import vn.iotstar.qaute.entity.Role;
 import vn.iotstar.qaute.enums.UserStatus;
 import vn.iotstar.qaute.repository.UserRepository;
+import vn.iotstar.repository.UserAccountRepository;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserAccountRepository legacyUsers;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final DeletedAccountEmailService deletedAccountEmails;
 
     @Value("${qaute.email-domain}")
     private String schoolEmailDomain;
 
     public AuthService(
             UserRepository userRepository,
+            UserAccountRepository legacyUsers,
             PasswordEncoder passwordEncoder,
-            OtpService otpService) {
+            OtpService otpService,
+            DeletedAccountEmailService deletedAccountEmails) {
         this.userRepository = userRepository;
+        this.legacyUsers = legacyUsers;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
+        this.deletedAccountEmails = deletedAccountEmails;
     }
 
     @Transactional
     public void register(RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
+        deletedAccountEmails.releaseForReuse(email);
 
         if (!request.getPassword()
                 .equals(request.getConfirmPassword())) {
@@ -43,7 +51,7 @@ public class AuthService {
             );
         }
 
-        if (userRepository.existsByEmailIgnoreCase(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email) || legacyUsers.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException(
                 "Email đã được đăng ký."
             );

@@ -13,7 +13,7 @@ import vn.iotstar.qaute.dto.QuestionRequest;
 import vn.iotstar.qaute.entity.Question;
 import vn.iotstar.qaute.service.QuestionService;
 
-@RestController
+@RestController("questionApiController")
 @RequestMapping("/api/qaute/questions")
 public class QuestionController {
     private final QuestionService questionService;

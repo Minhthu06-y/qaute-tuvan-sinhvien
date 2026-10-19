@@ -1,3 +1,3 @@
-﻿package vn.iotstar.qaute.entity;
+package vn.iotstar.qaute.entity;
 public enum ReviewDecision { APPROVED, REJECTED, RATED }
 

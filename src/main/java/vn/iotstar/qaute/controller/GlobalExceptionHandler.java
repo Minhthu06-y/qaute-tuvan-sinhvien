@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.controller;
+package vn.iotstar.qaute.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;

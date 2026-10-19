@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.entity;
+package vn.iotstar.qaute.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
@@ -11,6 +11,7 @@ public class AdvisorProfile {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @OneToOne(optional = false) @JoinColumn(unique = true) private User user;
     @ManyToOne(optional = false) private Department department;
+    @Enumerated(EnumType.STRING) private AdvisorType advisorType = AdvisorType.STUDENT;
     @Enumerated(EnumType.STRING) private AudienceType audience;
     @Enumerated(EnumType.STRING) private AdvisorStatus status = AdvisorStatus.ACTIVE;
     /** Trưởng chuyên viên tư vấn của khoa (mỗi khoa tối đa 1) */

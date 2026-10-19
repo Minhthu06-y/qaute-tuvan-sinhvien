@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.dto;
+package vn.iotstar.qaute.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;

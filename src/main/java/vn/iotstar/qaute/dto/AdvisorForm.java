@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.dto;
+package vn.iotstar.qaute.dto;
 
 import vn.iotstar.qaute.entity.*;
 import jakarta.validation.constraints.*;
@@ -16,6 +16,8 @@ public class AdvisorForm {
     private String phone;
     @NotNull(message = "Vui lòng chọn khoa")
     private Long departmentId;
+    @NotNull(message = "Vui lòng chọn đối tượng")
+    private AdvisorType advisorType;
     @NotNull(message = "Vui lòng chọn chuyên mục (đối tượng)")
     private AudienceType audience;
     @NotNull(message = "Vui lòng chọn trạng thái")

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Đầu mối tư vấn')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('heads')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading"><div><div class="admin-kicker">Đội ngũ tư vấn</div><h1>Đầu mối tư vấn theo khoa</h1><p>Chọn một tư vấn viên đang hoạt động làm đầu mối của khoa được phân công.</p></div></div>
+      <section class="admin-card"><div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>Tư vấn viên</th><th>Khoa / đơn vị</th><th>Đối tượng</th><th>Trạng thái</th><th>Phân công</th></tr></thead>
+        <tbody>
+          <tr th:each="advisor : ${advisors}">
+            <td><span class="admin-primary-text" th:text="${advisor.user.fullName}">Tên tư vấn viên</span><small class="admin-secondary-text" th:text="${advisor.user.email}">email@example.edu.vn</small></td>
+            <td th:text="${advisor.department.name}">Khoa</td><td th:text="${advisor.audience}">Đối tượng</td>
+            <td><span class="admin-status" th:classappend="${advisor.status.name() == 'ACTIVE' ? '' : 'inactive'}" th:text="${advisor.status.name() == 'ACTIVE' ? 'Đang hoạt động' : 'Tạm ngưng'}">Đang hoạt động</span></td>
+            <td><form th:action="@{/manager/heads/{id}/toggle(id=${advisor.id})}" method="post"><button class="btn btn-sm" th:classappend="${advisor.head ? 'btn-outline-secondary' : 'btn-outline-primary'}" th:disabled="${advisor.status.name() != 'ACTIVE'}" th:text="${advisor.head ? 'Gỡ đầu mối' : 'Chỉ định đầu mối'}" type="submit">Chỉ định đầu mối</button></form></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(advisors)}"><td colspan="5" class="admin-empty"><i class="bi bi-people"></i>Không có tư vấn viên thuộc khoa được phân công.</td></tr>
+        </tbody>
+      </table></div></section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.repository;
+package vn.iotstar.qaute.repository;
 
 import vn.iotstar.qaute.entity.*;
 import org.springframework.data.jpa.repository.*;

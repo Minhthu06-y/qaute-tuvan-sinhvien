@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Quản lý tài khoản')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('accounts')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading">
+        <div><div class="admin-kicker">Tài khoản & đội ngũ</div><h1>Quản lý tất cả tài khoản</h1><p>Tìm kiếm, lọc, khóa, kích hoạt hoặc xóa tài khoản trên các cổng QAUTE.</p></div>
+      </div>
+
+      <div class="admin-stats">
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-people"></i></span><span><strong th:text="${totalCount}">0</strong><small>Tài khoản</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-person-check"></i></span><span><strong th:text="${activeCount}">0</strong><small>Đang hoạt động</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-person-lock"></i></span><span><strong th:text="${lockedCount}">0</strong><small>Đã khóa</small></span></div>
+      </div>
+
+      <form class="admin-toolbar" th:action="@{/admin/accounts}" method="get">
+        <div><label class="form-label" for="kw">Tìm kiếm</label><input id="kw" name="kw" class="form-control" th:value="${kw}" placeholder="Tên hoặc email"></div>
+        <div><label class="form-label" for="role">Vai trò</label><select id="role" name="role" class="form-select"><option value="ALL">Tất cả vai trò</option><option th:each="option : ${roleOptions}" th:value="${option.code}" th:selected="${role == option.code}" th:text="${option.label}">Vai trò</option></select></div>
+        <div><label class="form-label" for="status">Trạng thái</label><select id="status" name="status" class="form-select"><option value="ALL" th:selected="${status == 'ALL'}">Tất cả</option><option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Đang hoạt động</option><option value="DISABLED" th:selected="${status == 'DISABLED'}">Đã khóa</option><option value="PENDING" th:selected="${status == 'PENDING'}">Chờ xác thực</option></select></div>
+        <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-search me-1"></i>Lọc</button>
+        <a class="btn btn-light btn-sm" th:href="@{/admin/accounts}">Xóa lọc</a>
+      </form>
+
+      <section class="admin-card">
+        <div class="admin-card-head"><div><h2>Danh sách tài khoản</h2><p th:text="${accounts.size()} + ' tài khoản phù hợp'">0 tài khoản phù hợp</p></div></div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Họ tên / email</th><th>Vai trò</th><th>Khoa / đơn vị</th><th>Nguồn</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              <tr th:each="account : ${accounts}">
+                <td><span class="admin-primary-text" th:text="${account.fullName}">Tên tài khoản</span><small class="admin-secondary-text" th:text="${account.email}">email@example.edu.vn</small></td>
+                <td th:text="${account.roleLabels}">Sinh viên</td>
+                <td th:text="${account.organizations}">Khoa / đơn vị</td>
+                <td th:text="${account.sources}">QAUTE</td>
+                <td th:text="${account.createdAt}">—</td>
+                <td><span class="admin-status" th:classappend="${account.statusCode == 'ACTIVE' ? '' : (account.statusCode == 'PENDING' ? 'pending' : 'disabled')}" th:text="${account.statusLabel}">Đang hoạt động</span></td>
+                <td><div class="d-flex flex-wrap gap-1"><form th:if="${account.canToggle}" th:action="@{/admin/accounts/toggle}" method="post"><input type="hidden" name="email" th:value="${account.email}"><button class="btn btn-sm" th:classappend="${account.enabled ? 'btn-outline-secondary' : 'btn-outline-success'}" type="submit" th:text="${account.enabled ? 'Khóa' : 'Kích hoạt'}">Khóa</button></form><form th:if="${account.canDelete}" th:action="@{/admin/accounts/delete}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này?');"><input type="hidden" name="email" th:value="${account.email}"><button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Xóa</button></form><span th:unless="${account.canDelete}" class="admin-secondary-text">Được bảo vệ</span></div></td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(accounts)}"><td colspan="7" class="admin-empty"><i class="bi bi-people"></i>Không tìm thấy tài khoản phù hợp.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

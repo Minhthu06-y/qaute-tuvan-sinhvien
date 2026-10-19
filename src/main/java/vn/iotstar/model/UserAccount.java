@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +27,11 @@ public class UserAccount {
     private String roles;
     private String title;
     private String studentCode;
+    private Boolean enabled = true;
+    private Boolean deleted = false;
+    private String deletedEmail;
+    private LocalDateTime deletedAt;
+    private String deletedBy;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "faculty_id")
     private Faculty faculty;
@@ -48,6 +54,11 @@ public class UserAccount {
     public String getRoles() { return roles; }
     public String getTitle() { return title; }
     public String getStudentCode() { return studentCode; }
+    public boolean isEnabled() { return !isDeleted() && (enabled == null || enabled); }
+    public boolean isDeleted() { return Boolean.TRUE.equals(deleted); }
+    public String getDeletedEmail() { return deletedEmail; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public String getDeletedBy() { return deletedBy; }
     public Faculty getFaculty() { return faculty; }
     public Set<FacultyTopic> getAssignedTopics() { return assignedTopics; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
@@ -56,6 +67,11 @@ public class UserAccount {
     public void setRoles(String roles) { this.roles = roles; }
     public void setTitle(String title) { this.title = title; }
     public void setStudentCode(String studentCode) { this.studentCode = studentCode; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
+    public void setDeletedEmail(String deletedEmail) { this.deletedEmail = deletedEmail; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
     public void setFaculty(Faculty faculty) { this.faculty = faculty; }
     public void setAssignedTopics(Collection<FacultyTopic> assignedTopics) {
         this.assignedTopics = assignedTopics == null ? new HashSet<>() : new HashSet<>(assignedTopics);

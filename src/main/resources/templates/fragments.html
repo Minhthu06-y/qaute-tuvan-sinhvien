@@ -13,7 +13,7 @@
 <body>
 <header th:fragment="topbar" class="topbar">
   <button class="btn btn-link text-white d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidePanel" aria-label="Mở menu"><i class="bi bi-list fs-3"></i></button>
-  <a class="brand-mark" th:href="@{/questions}" aria-label="QAUTE">Q</a>
+  <a class="brand-mark" th:href="@{/}" aria-label="QAUTE - Trang chủ">Q</a>
   <div class="topbar-title"><span class="d-block d-sm-none">QAUTE • Tư vấn sinh viên</span><span class="d-none d-sm-block">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span><small>HỆ THỐNG TƯ VẤN SINH VIÊN</small></div>
   <div class="topbar-actions">
     <span class="connection-pill"><span class="connection-dot"></span> Trực tuyến</span>
@@ -36,9 +36,9 @@
     <a class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/questions}"><i class="bi bi-inbox"></i><span>Hộp câu hỏi</span><span class="nav-arrow">›</span></a>
     <a class="side-link" th:if="${isStudent}" th:classappend="${active == 'new' ? 'active' : ''}" th:href="@{/questions/new}"><i class="bi bi-plus-circle"></i><span>Gửi câu hỏi</span></a>
     <a class="side-link" th:classappend="${active == 'public' ? 'active' : ''}" th:href="@{/questions/public}"><i class="bi bi-megaphone"></i><span>Câu hỏi công khai</span></a>
-    <a class="side-link" th:if="${isManager}" th:classappend="${active == 'approvals' ? 'active' : ''}" th:href="@{/manager/approvals}"><i class="bi bi-check2-square"></i><span>Chờ trưởng nhóm duyệt</span></a>
+    <a class="side-link" th:if="${isManager}" th:classappend="${active == 'approvals' ? 'active' : ''}" th:href="@{/manager/approvals}"><i class="bi bi-check2-square"></i><span>Chờ trưởng ban cố vấn duyệt</span></a>
     <div class="nav-section-label nav-label-spaced">KHOA & TÀI KHOẢN</div>
-    <a class="side-link" href="#departments"><i class="bi bi-diagram-3"></i><span>Đội ngũ theo khoa</span></a>
+    <a th:if="${isStudent}" class="side-link" href="#departments"><i class="bi bi-diagram-3"></i><span>Đội ngũ theo khoa</span></a>
     <a class="side-link" href="#demo-role"><i class="bi bi-person-gear"></i><span>Đổi vai trò demo</span></a>
     <div class="demo-card" id="demo-role">
       <span class="demo-label"><i class="bi bi-stars"></i> CHẾ ĐỘ MÔ PHỎNG</span>
@@ -47,7 +47,7 @@
         <a th:href="@{/demo/switch(role='advisor')}" class="btn btn-demo" th:classappend="${activeRole == 'ADVISOR' ? 'selected' : ''}"><i class="bi bi-chat-square-text"></i> Tư vấn viên</a>
         <a th:href="@{/demo/switch(role='lecturer')}" class="btn btn-demo" th:classappend="${activeRole == 'LECTURER' ? 'selected' : ''}"><i class="bi bi-person-video3"></i> Giảng viên</a>
         <a th:href="@{/demo/switch(role='staff')}" class="btn btn-demo" th:classappend="${activeRole == 'STAFF' ? 'selected' : ''}"><i class="bi bi-person-badge"></i> Cán bộ viên chức</a>
-        <a th:href="@{/demo/switch(role='manager')}" class="btn btn-demo" th:classappend="${isManager ? 'selected' : ''}"><i class="bi bi-person-check"></i> Trưởng nhóm</a>
+        <a th:href="@{/demo/switch(role='manager')}" class="btn btn-demo" th:classappend="${isManager ? 'selected' : ''}"><i class="bi bi-person-check"></i> Trưởng ban cố vấn</a>
       </div>
       <p class="demo-hint">Mật khẩu demo: <code>123456</code></p>
     </div>

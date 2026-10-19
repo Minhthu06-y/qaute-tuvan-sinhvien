@@ -1,9 +1,37 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Câu hỏi công khai')}"></head>
-<body><header th:replace="~{fragments :: topbar}"></header><aside th:replace="~{fragments :: sidebar('public')}"></aside>
-<div class="page-shell"><main class="page-content"><div class="page-heading"><div><div class="eyebrow">Thư viện tư vấn</div><h1>Câu hỏi công khai</h1><p class="heading-caption">Các nội dung được tư vấn viên công khai cho sinh viên cùng khoa tham khảo.</p></div><a th:href="@{/questions}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a></div>
-  <section class="panel"><div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-megaphone"></i>Tham khảo câu trả lời</h2><div class="panel-subtitle">Thông tin cá nhân người hỏi không hiển thị trong danh sách công khai</div></div><span class="count-badge" th:text="${publicQuestions.size()} + ' câu hỏi'">0 câu hỏi</span></div>
-    <div th:if="${#lists.isEmpty(publicQuestions)}" class="empty-state"><i class="bi bi-journal-text"></i><strong>Chưa có nội dung công khai</strong><p>Tư vấn viên sẽ đăng câu hỏi hữu ích sau khi rà soát thông tin.</p></div>
-    <ul th:unless="${#lists.isEmpty(publicQuestions)}" class="question-list"><li class="question-row" th:each="q : ${publicQuestions}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Tiêu đề</a><div class="question-preview" th:text="${q.body}">Nội dung</div><div class="row-meta"><span class="status-badge status-answered" th:text="${q.status.name() == 'ANSWERED' ? 'Có câu trả lời' : 'Đang tiếp nhận'}">Có câu trả lời</span><span class="status-badge visibility-badge" th:text="${q.topic != null ? q.topic.name : q.faculty.shortName}">Chuyên đề</span></div></div><div class="asker-cell"><span class="mini-avatar"><i class="bi bi-person"></i></span><span>Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li></ul>
-  </section>
-</main><div th:replace="~{fragments :: footer}"></div></div><div th:replace="~{fragments :: scripts}"></div></body></html>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<aside th:replace="~{fragments :: sidebar('public')}"></aside>
+<div class="page-shell">
+  <main class="page-content">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Thư viện tư vấn</div>
+        <h1>Câu hỏi công khai</h1>
+        <p class="heading-caption" th:if="${selectedFaculty == null}">Tham khảo các nội dung đã được tư vấn viên công khai.</p>
+        <p class="heading-caption" th:if="${selectedFaculty != null}"><span th:text="${selectedFaculty.name}">Đơn vị</span><span th:if="${selectedTopic != null}"> · <span th:text="${selectedTopic.name}">Chuyên đề</span></span></p>
+      </div>
+      <a th:href="@{/questions}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a>
+    </div>
+
+    <section th:if="${isStudent}" class="panel public-filter-panel">
+      <form th:action="@{/questions/public}" method="get" class="public-filter-form">
+        <label class="form-label mb-1" for="publicFacultyId">Xem câu hỏi theo đơn vị</label>
+        <div class="d-flex gap-2"><select id="publicFacultyId" name="facultyId" class="form-select"><option value="">Tất cả đơn vị</option><option th:each="faculty : ${publicFaculties}" th:value="${faculty.id}" th:selected="${selectedFaculty != null && selectedFaculty.id == faculty.id}" th:text="${faculty.name}">Khoa Công nghệ thông tin</option></select><button class="btn btn-primary btn-sm" type="submit">Xem</button></div>
+      </form>
+      <div th:if="${selectedFaculty != null}" class="public-topic-links"><a class="topic-filter-link" th:href="@{/questions/public(facultyId=${selectedFaculty.id})}">Tất cả chuyên đề</a><a class="topic-filter-link" th:each="topic : ${publicTopics}" th:classappend="${selectedTopic != null && selectedTopic.id == topic.id ? 'active' : ''}" th:href="@{/questions/public(facultyId=${selectedFaculty.id},topicId=${topic.id})}" th:text="${topic.name}">Chuyên đề</a></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-megaphone"></i>Tham khảo câu trả lời</h2><div class="panel-subtitle">Thông tin cá nhân người hỏi không hiển thị trong danh sách công khai</div></div><span class="count-badge" th:text="${publicQuestions.size()} + ' câu hỏi'">0 câu hỏi</span></div>
+      <div th:if="${#lists.isEmpty(publicQuestions)}" class="empty-state"><i class="bi bi-journal-text"></i><strong>Chưa có nội dung công khai</strong><p>Tư vấn viên sẽ đăng câu hỏi hữu ích sau khi rà soát thông tin.</p></div>
+      <ul th:unless="${#lists.isEmpty(publicQuestions)}" class="question-list"><li class="question-row" th:each="q : ${publicQuestions}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Tiêu đề</a><div class="question-preview" th:text="${q.body}">Nội dung</div><div class="row-meta"><span class="status-badge status-answered" th:text="${q.status.name() == 'ANSWERED' ? 'Có câu trả lời' : 'Đang tiếp nhận'}">Có câu trả lời</span><span class="status-badge visibility-badge" th:text="${q.topic != null ? q.topic.name : q.faculty.shortName}">Chuyên đề</span></div></div><div class="asker-cell"><span class="mini-avatar"><i class="bi bi-person"></i></span><span>Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li></ul>
+    </section>
+  </main>
+  <div th:replace="~{fragments :: footer}"></div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

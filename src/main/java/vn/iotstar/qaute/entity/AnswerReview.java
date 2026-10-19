@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.entity;
+package vn.iotstar.qaute.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;

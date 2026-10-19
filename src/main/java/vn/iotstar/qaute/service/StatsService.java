@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.service;
+package vn.iotstar.qaute.service;
 
 import vn.iotstar.qaute.dto.StatsDto;
 import vn.iotstar.qaute.dto.StatsDto.*;
@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StatsService {
-    private final QuestionRepository questions;
-    private final AnswerRepository answers;
+    private final QauteQuestionRepository questions;
+    private final QauteAnswerRepository answers;
     private final AnswerReviewRepository reviews;
 
     private LocalDate startOf(String period, LocalDate today) {

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Câu hỏi sinh viên')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('questions')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading">
+        <div><div class="admin-kicker">Hỗ trợ sinh viên</div><h1>Quản lý câu hỏi</h1><p>Theo dõi nội dung gửi đến các khoa và trạng thái phản hồi.</p></div>
+        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/dashboard}"><i class="bi bi-arrow-left me-1"></i>Tổng quan</a>
+      </div>
+
+      <div class="admin-stats">
+        <a class="admin-stat text-decoration-none" th:href="@{/admin/student-questions}"><span class="admin-stat-icon"><i class="bi bi-chat-square-text"></i></span><span><strong th:text="${totalCount}">0</strong><small>Tổng câu hỏi</small></span></a>
+        <a class="admin-stat text-decoration-none" th:href="@{/admin/student-questions(status='OPEN')}"><span class="admin-stat-icon"><i class="bi bi-hourglass-split"></i></span><span><strong th:text="${openCount}">0</strong><small>Chưa trả lời</small></span></a>
+        <a class="admin-stat text-decoration-none" th:href="@{/admin/student-questions(status='ANSWERED')}"><span class="admin-stat-icon"><i class="bi bi-check2-circle"></i></span><span><strong th:text="${answeredCount}">0</strong><small>Đã trả lời</small></span></a>
+      </div>
+
+      <nav class="admin-tabs" aria-label="Lọc trạng thái câu hỏi">
+        <a th:href="@{/admin/student-questions(facultyId=${facultyId},kw=${kw})}" th:classappend="${status == 'ALL' ? 'active' : ''}">Tất cả</a>
+        <a th:href="@{/admin/student-questions(status='OPEN',facultyId=${facultyId},kw=${kw})}" th:classappend="${status == 'OPEN' ? 'active' : ''}">Chưa trả lời</a>
+        <a th:href="@{/admin/student-questions(status='ANSWERED',facultyId=${facultyId},kw=${kw})}" th:classappend="${status == 'ANSWERED' ? 'active' : ''}">Đã trả lời</a>
+      </nav>
+      <form class="admin-toolbar" th:action="@{/admin/student-questions}" method="get">
+        <input type="hidden" name="status" th:value="${status}">
+        <div><label class="form-label" for="kw">Tìm câu hỏi hoặc sinh viên</label><input id="kw" name="kw" class="form-control" th:value="${kw}" placeholder="Nhập tiêu đề, nội dung, tên hoặc email"></div>
+        <div><label class="form-label" for="facultyId">Khoa / đơn vị</label><select id="facultyId" name="facultyId" class="form-select"><option value="">Tất cả đơn vị</option><option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:selected="${facultyId != null && facultyId == faculty.id}" th:text="${faculty.name}">Khoa</option></select></div>
+        <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Lọc</button>
+        <a class="btn btn-light btn-sm" th:href="@{/admin/student-questions}">Xóa lọc</a>
+      </form>
+
+      <section class="admin-card">
+        <div class="admin-card-head"><div><h2>Danh sách câu hỏi sinh viên</h2><p><strong th:text="${page.totalElements}">0</strong> câu hỏi phù hợp</p></div></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Câu hỏi</th><th>Sinh viên</th><th>Khoa / chuyên đề</th><th>Ngày gửi</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <tr th:each="question : ${page.content}">
+              <td><a class="admin-primary-text text-decoration-none" th:href="@{/admin/student-questions/{id}(id=${question.id})}" th:text="${question.subject}">Tiêu đề câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(question.body, 100)}">Nội dung câu hỏi</small></td>
+              <td><span class="admin-primary-text" th:text="${question.asker.displayName}">Sinh viên</span><small class="admin-secondary-text" th:text="${question.asker.email}">email@example.edu.vn</small></td>
+              <td><span th:text="${question.faculty.name}">Khoa</span><small class="admin-secondary-text" th:if="${question.topic != null}" th:text="${question.topic.name}">Chuyên đề</small></td>
+              <td th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</td>
+              <td><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></td>
+              <td><a class="admin-icon-button" th:href="@{/admin/student-questions/{id}(id=${question.id})}" title="Xem chi tiết"><i class="bi bi-arrow-up-right"></i></a></td>
+            </tr>
+            <tr th:if="${page.empty}"><td colspan="6" class="admin-empty"><i class="bi bi-chat-square"></i>Chưa có câu hỏi phù hợp bộ lọc.</td></tr>
+          </tbody>
+        </table></div>
+        <div class="admin-pagination"><span>Trang <strong th:text="${page.number + 1}">1</strong> / <strong th:text="${T(java.lang.Math).max(page.totalPages, 1)}">1</strong></span><div class="admin-inline-actions"><a class="btn btn-light btn-sm" th:if="${page.hasPrevious()}" th:href="@{/admin/student-questions(status=${status},facultyId=${facultyId},kw=${kw},page=${page.number - 1})}">Trước</a><a class="btn btn-light btn-sm" th:if="${page.hasNext()}" th:href="@{/admin/student-questions(status=${status},facultyId=${facultyId},kw=${kw},page=${page.number + 1})}">Sau</a></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

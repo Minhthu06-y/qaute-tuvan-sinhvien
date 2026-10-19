@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.service;
+package vn.iotstar.qaute.service;
 
 import vn.iotstar.qaute.entity.Department;
 import vn.iotstar.qaute.repository.UserRepository;

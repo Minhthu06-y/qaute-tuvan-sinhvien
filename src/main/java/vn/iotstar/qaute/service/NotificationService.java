@@ -11,7 +11,7 @@ import vn.iotstar.qaute.entity.Notification;
 import vn.iotstar.qaute.entity.User;
 import vn.iotstar.qaute.repository.NotificationRepository;
 
-@Service
+@Service("qauteNotificationService")
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;

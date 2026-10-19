@@ -9,17 +9,17 @@ import vn.iotstar.qaute.dto.QuestionRequest;
 import vn.iotstar.qaute.entity.Question;
 import vn.iotstar.qaute.entity.User;
 import vn.iotstar.qaute.entity.QuestionStatus;
-import vn.iotstar.qaute.repository.QuestionRepository;
+import vn.iotstar.qaute.repository.QauteQuestionRepository;
 import vn.iotstar.qaute.repository.UserRepository;
 
 @Service
 public class QuestionService {
 
-    private final QuestionRepository questionRepository;
+    private final QauteQuestionRepository questionRepository;
     private final UserRepository userRepository;
 
     public QuestionService(
-            QuestionRepository questionRepository,
+            QauteQuestionRepository questionRepository,
             UserRepository userRepository) {
         this.questionRepository = questionRepository;
         this.userRepository = userRepository;

@@ -74,6 +74,16 @@ public class User {
     @Column(nullable = false)
     private boolean enabled;
 
+    private Boolean deleted = false;
+
+    @Column(length = 150)
+    private String deletedEmail;
+
+    private LocalDateTime deletedAt;
+
+    @Column(length = 150)
+    private String deletedBy;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -88,6 +98,14 @@ public class User {
     // Both backend branches use a different name for the encoded credential.
     public String getPassword() {
         return password != null ? password : passwordHash;
+    }
+
+    public boolean isEnabled() {
+        return enabled && !Boolean.TRUE.equals(deleted);
+    }
+
+    public boolean isDeleted() {
+        return Boolean.TRUE.equals(deleted);
     }
 
     public void setPassword(String password) {

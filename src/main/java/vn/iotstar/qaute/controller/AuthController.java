@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.iotstar.qaute.dto.RegisterRequest;
 import vn.iotstar.qaute.service.AuthService;
 
-@RestController
+@RestController("registrationApiController")
 @RequestMapping("/api/qaute/auth")
 public class AuthController {
     private final AuthService authService;

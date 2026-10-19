@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.dto;
+package vn.iotstar.qaute.dto;
 
 import vn.iotstar.qaute.entity.ReviewDecision;
 import jakarta.validation.constraints.*;

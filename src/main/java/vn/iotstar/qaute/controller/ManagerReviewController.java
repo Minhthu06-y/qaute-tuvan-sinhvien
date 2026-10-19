@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.controller;
+package vn.iotstar.qaute.controller;
 
 import vn.iotstar.qaute.dto.ReviewForm;
 import vn.iotstar.qaute.entity.*;
@@ -22,6 +22,7 @@ public class ManagerReviewController {
 
     @GetMapping("/reviews")
     public String list(@RequestParam(defaultValue = "PENDING") ApprovalStatus status, Principal p, Model m) {
+        m.addAttribute("base", "/manager");
         m.addAttribute("answers", service.listByStatus(status, p.getName()));
         m.addAttribute("status", status);
         return "manager/reviews";
@@ -56,6 +57,7 @@ public class ManagerReviewController {
     }
 
     private String detailModel(Long id, Principal p, Model m) {
+        m.addAttribute("base", "/manager");
         Answer a = service.getForManager(id, p.getName());   // 403 nếu khác khoa
         m.addAttribute("answer", a); m.addAttribute("thread", service.thread(a));
         m.addAttribute("history", service.history(id));

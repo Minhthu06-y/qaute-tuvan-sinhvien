@@ -8,5 +8,6 @@ import vn.iotstar.model.ApprovalStatus;
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     List<Answer> findByQuestionIdOrderByCreatedAtAsc(Long questionId);
     List<Answer> findByApprovalStatusAndQuestionFacultyIdOrderByCreatedAtAsc(ApprovalStatus approvalStatus, Long facultyId);
+    List<Answer> findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus approvalStatus);
     boolean existsByQuestionIdAndApprovalStatus(Long questionId, ApprovalStatus approvalStatus);
 }

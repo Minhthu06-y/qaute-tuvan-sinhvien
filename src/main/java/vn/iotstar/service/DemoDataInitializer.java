@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import vn.iotstar.model.*;
 import vn.iotstar.repository.*;
 
 @Component
+@Order(2)
 public class DemoDataInitializer implements CommandLineRunner {
     private final FacultyRepository faculties;
     private final FacultyTopicRepository topics;
@@ -56,7 +58,7 @@ public class DemoDataInitializer implements CommandLineRunner {
                 "Võ Quốc Bảo", "canbo@qaute.edu.vn", passwordEncoder.encode("123456"), "STAFF", "Cán bộ viên chức khoa CNTT", "", it)));
         advisor.setRoles("STUDENT,ADVISOR");
         advisor.setTitle("Sinh viên kiêm Tư vấn viên khoa CNTT · phụ trách Đồ án");
-        manager.setRoles("MANAGER");
+        manager.setRoles("MANAGER,ADVISOR");
         student.setRoles("STUDENT");
         lecturer.setRoles("LECTURER");
         staff.setRoles("STAFF");

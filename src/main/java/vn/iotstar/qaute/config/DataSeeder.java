@@ -1,9 +1,10 @@
-﻿package vn.iotstar.qaute.config;
+package vn.iotstar.qaute.config;
 
 import vn.iotstar.qaute.entity.*;
 import vn.iotstar.qaute.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import vn.iotstar.qaute.enums.UserStatus;
@@ -11,6 +12,7 @@ import vn.iotstar.qaute.enums.UserStatus;
 /** Chỉ để chạy thử. Admin mặc định: admin@qaute.local / Admin@123 (ĐỔI trước khi nộp). */
 @Component
 @RequiredArgsConstructor
+@Order(1)
 public class DataSeeder implements CommandLineRunner {
     private final UserRepository users;
     private final DepartmentRepository departments;

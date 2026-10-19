@@ -47,7 +47,7 @@ public class AccountController {
             case ADVISOR -> "Tư vấn viên";
             case LECTURER -> "Giảng viên";
             case STAFF -> "Cán bộ viên chức";
-            case MANAGER -> "Trưởng nhóm tư vấn";
+            case MANAGER -> "Trưởng ban cố vấn";
         };
     }
 }

@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
-@Table(name = "answers")
+@Entity(name = "QauteAnswer")
+@Table(name = "qaute_answers")
 @Getter
 @Setter
 @NoArgsConstructor

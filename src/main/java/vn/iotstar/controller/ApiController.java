@@ -33,7 +33,7 @@ public class ApiController {
         UserAccount user = currentUser(authentication);
         List<Question> result;
         if (isManager(authentication)) {
-            result = user.getFaculty() == null ? List.of() : questions.findByFacultyIdOrderByCreatedAtDesc(user.getFaculty().getId());
+            result = questions.findAllByOrderByCreatedAtDesc();
         } else if (isAdvisor(authentication)) {
             result = user.getFaculty() == null ? List.of()
                     : questions.findByFacultyIdOrderByCreatedAtDesc(user.getFaculty().getId()).stream()
@@ -54,11 +54,16 @@ public class ApiController {
         UserAccount author = currentUser(authentication);
         Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanManage(question, authentication, author);
-        if (question.isLocked()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Question is locked after transfer");
+        if (question.isLocked() && !isManager(authentication)) throw new ResponseStatusException(HttpStatus.CONFLICT, "Question is locked after transfer");
         if (request.body() == null || request.body().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Answer body is required");
-        ApprovalStatus state = request.requestApproval() ? ApprovalStatus.PENDING : ApprovalStatus.NOT_REQUIRED;
+        boolean approvalRequired = !isManager(authentication) && isAdvisor(authentication) && request.requestApproval();
+        ApprovalStatus state = approvalRequired ? ApprovalStatus.PENDING : ApprovalStatus.NOT_REQUIRED;
         Answer answer = answers.save(new Answer(question, author, request.body().trim(), LocalDateTime.now(), state));
-        if (!request.requestApproval()) { question.setStatus(QuestionStatus.ANSWERED); question.setReplyNotification(true); questions.save(question); }
+        if (!approvalRequired) {
+            question.setStatus(QuestionStatus.ANSWERED); question.setReplyNotification(true);
+            if (isManager(authentication)) question.setLocked(false);
+            questions.save(question);
+        }
         return new AnswerDto(answer.getId(), author.getDisplayName(), answer.getBody(), answer.getCreatedAt(), answer.getApprovalStatus().name());
     }
 
@@ -71,8 +76,7 @@ public class ApiController {
     private void ensureCanView(Question q, Authentication auth) {
         UserAccount user = currentUser(auth);
         if (isManager(auth)) {
-            if (user.getFaculty() == null || !user.getFaculty().getId().equals(q.getFaculty().getId()))
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            return;
         } else if (isAdvisor(auth)) {
             boolean assignedQuestion = user.getFaculty() != null && user.getFaculty().getId().equals(q.getFaculty().getId())
                     && user.isAssignedTo(q.getTopic());
@@ -82,8 +86,9 @@ public class ApiController {
         }
     }
     private void ensureCanManage(Question q, Authentication auth, UserAccount user) {
+        if (isManager(auth)) return;
         boolean sameFaculty = user.getFaculty() != null && user.getFaculty().getId().equals(q.getFaculty().getId());
-        boolean staff = sameFaculty && (isManager(auth) || (isAdvisor(auth) && user.isAssignedTo(q.getTopic())));
+        boolean staff = sameFaculty && isAdvisor(auth) && user.isAssignedTo(q.getTopic());
         if (!staff) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
     private QuestionDto toDto(Question q) {

@@ -30,7 +30,7 @@ public class ManagerController {
     @GetMapping("/manager/approvals") public String approvals(HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         if (!viewer.isManager()) return "redirect:/questions";
-        List<Answer> pending = answers.findByApprovalStatusAndQuestionFacultyIdOrderByCreatedAtAsc(ApprovalStatus.PENDING, viewer.user().getFaculty().getId());
+        List<Answer> pending = answers.findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus.PENDING);
         model.addAttribute("pendingAnswers", pending); return "approvals";
     }
     @PostMapping("/manager/answers/{id}/review") public String review(@PathVariable Long id, @RequestParam boolean approved,
@@ -39,7 +39,6 @@ public class ManagerController {
         if (!viewer.isManager()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         Answer answer = answers.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Question question = answer.getQuestion();
-        if (!viewer.user().getFaculty().getId().equals(question.getFaculty().getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         if (answer.getApprovalStatus() != ApprovalStatus.PENDING) { flash.addFlashAttribute("error", "Yêu cầu duyệt này đã được xử lý."); return "redirect:/manager/approvals"; }
         if (reason.isBlank()) { flash.addFlashAttribute("error", "Vui lòng ghi lý do duyệt hoặc từ chối."); return "redirect:/manager/approvals"; }
         answer.setApprovalStatus(approved ? ApprovalStatus.APPROVED : ApprovalStatus.REJECTED);

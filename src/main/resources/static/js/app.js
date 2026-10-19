@@ -1,7 +1,13 @@
 (() => {
   const root = document.getElementById('app-scripts');
   const toast = document.getElementById('live-toast');
-  if (!root || !toast || !window.StompJs || !window.SockJS) return;
+  if (!root) return;
+  if (['ADVISOR', 'LECTURER', 'STAFF'].includes(root.dataset.activeRole)) {
+    const heartbeat = () => fetch('/presence/heartbeat', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+    heartbeat();
+    window.setInterval(heartbeat, 30000);
+  }
+  if (!toast || !window.StompJs || !window.SockJS) return;
   const userId = root.dataset.userId;
   const messageNode = document.getElementById('live-toast-message');
   const linkNode = document.getElementById('live-toast-link');

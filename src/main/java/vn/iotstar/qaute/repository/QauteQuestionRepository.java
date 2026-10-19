@@ -10,16 +10,16 @@ import org.springframework.data.repository.query.Param;
 import vn.iotstar.qaute.entity.Question;
 import vn.iotstar.qaute.entity.QuestionStatus;
 
-public interface QuestionRepository extends JpaRepository<Question, Long> {
+public interface QauteQuestionRepository extends JpaRepository<Question, Long> {
     @Query("""
-        select q from Question q
+        select q from QauteQuestion q
         where q.publicVisible = true or q.publicQuestion = true
         order by q.createdAt desc
         """)
     List<Question> findByPublicVisibleTrueOrderByCreatedAtDesc();
 
     @Query("""
-        select q from Question q
+        select q from QauteQuestion q
         left join q.asker asker
         left join q.author author
         where asker.id = :userId or author.id = :userId
@@ -45,7 +45,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
         LocalDateTime to
     );
 
-    @Query("select q.createdAt from Question q where q.createdAt >= :from and q.createdAt < :to")
+    @Query("select q.createdAt from QauteQuestion q where q.createdAt >= :from and q.createdAt < :to")
     List<LocalDateTime> createdTimes(
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to

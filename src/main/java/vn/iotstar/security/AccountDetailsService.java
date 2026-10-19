@@ -21,6 +21,7 @@ public class AccountDetailsService implements UserDetailsService {
         List<SimpleGrantedAuthority> authorities = Arrays.stream(account.getRoles().split(","))
                 .map(String::trim).filter(role -> !role.isBlank())
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role)).toList();
-        return User.withUsername(account.getEmail()).password(account.getPasswordHash()).authorities(authorities).build();
+        return User.withUsername(account.getEmail()).password(account.getPasswordHash())
+                .disabled(!account.isEnabled() || account.isDeleted()).authorities(authorities).build();
     }
 }

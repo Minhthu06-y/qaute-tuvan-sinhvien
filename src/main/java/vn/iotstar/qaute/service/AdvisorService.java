@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.service;
+package vn.iotstar.qaute.service;
 
 import vn.iotstar.qaute.dto.AdvisorForm;
 import vn.iotstar.qaute.entity.*;
@@ -60,8 +60,10 @@ public class AdvisorService {
         Optional<AdvisorProfile> existing = advisors.findByUserId(u.getId());
         if (existing.isPresent() && !existing.get().isDeleted())
             throw new FieldException("email", "Người dùng này đã là tư vấn viên");
-        if (u.getRole() != Role.USER)
-            throw new FieldException("email", "Chỉ có thể thêm tài khoản người dùng thường làm tư vấn viên");
+        boolean managerAsTeamLead = u.getRole() == Role.MANAGER
+                && f.getAdvisorType() == AdvisorType.TEAM_LEADER;
+        if (u.getRole() != Role.USER && u.getRole() != Role.CONSULTANT && !managerAsTeamLead)
+            throw new FieldException("email", "Chỉ tài khoản người dùng hoặc trưởng ban cố vấn mới có thể làm tư vấn viên");
         Department d = departments.findById(f.getDepartmentId())
                 .orElseThrow(() -> new FieldException("departmentId", "Khoa không tồn tại"));
         u.setFullName(f.getFullName().trim());
@@ -70,7 +72,8 @@ public class AdvisorService {
         boolean restored = existing.isPresent();      // từng bị gỡ -> khôi phục hồ sơ cũ, không tạo trùng
         AdvisorProfile p = existing.orElseGet(AdvisorProfile::new);
         p.setDeleted(false); p.setDeletedAt(null); p.setDeletedBy(null); p.setHead(false);
-        p.setUser(u); p.setDepartment(d); p.setAudience(f.getAudience()); p.setStatus(f.getStatus());
+        p.setUser(u); p.setDepartment(d); p.setAdvisorType(f.getAdvisorType());
+        p.setAudience(f.getAudience()); p.setStatus(f.getStatus());
         advisors.save(p);
         if (f.isHead()) applyHead(p, true);
         logs.log(actor, "ADMIN", restored ? "RESTORE_ADVISOR" : "ADD_ADVISOR", u.getEmail() + " -> " + d.getName());
@@ -85,7 +88,8 @@ public class AdvisorService {
         p.getUser().setFullName(f.getFullName().trim());
         p.getUser().setPhone(f.getPhone().trim());
         boolean moved = !p.getDepartment().getId().equals(d.getId());
-        p.setDepartment(d); p.setAudience(f.getAudience()); p.setStatus(f.getStatus());
+        p.setDepartment(d); p.setAdvisorType(f.getAdvisorType());
+        p.setAudience(f.getAudience()); p.setStatus(f.getStatus());
         if (moved || f.getStatus() == AdvisorStatus.INACTIVE) p.setHead(false);
         if (f.getStatus() == AdvisorStatus.ACTIVE) applyHead(p, f.isHead());
         logs.log(actor, "ADMIN", "UPDATE_ADVISOR", p.getUser().getEmail());

@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import vn.iotstar.qaute.entity.Answer;
 import vn.iotstar.qaute.entity.ApprovalStatus;
 
-public interface AnswerRepository extends JpaRepository<Answer, Long> {
+public interface QauteAnswerRepository extends JpaRepository<Answer, Long> {
     long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
         LocalDateTime from,
         LocalDateTime to
@@ -20,7 +20,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     long countByApprovalStatus(ApprovalStatus status);
 
     @Query("""
-        select a from Answer a
+        select a from QauteAnswer a
         where a.question.id = :questionId
           and (a.published = true or a.approved = true)
         order by a.createdAt asc
@@ -31,7 +31,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
     List<Answer> findByQuestion_IdOrderByCreatedAtAsc(Long questionId);
 
-    @Query("select a.createdAt from Answer a where a.createdAt >= :from and a.createdAt < :to")
+    @Query("select a.createdAt from QauteAnswer a where a.createdAt >= :from and a.createdAt < :to")
     List<LocalDateTime> createdTimes(
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to
@@ -40,7 +40,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     @Query("""
         select coalesce(a.advisor.fullName, a.author.fullName),
                coalesce(a.advisor.email, a.author.email), count(a)
-        from Answer a
+        from QauteAnswer a
         where a.createdAt >= :from and a.createdAt < :to
         group by coalesce(a.advisor.fullName, a.author.fullName),
                  coalesce(a.advisor.email, a.author.email)
@@ -52,7 +52,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
         Pageable pageable
     );
 
-    @Query("select a from Answer a where a.approvalStatus = :status order by a.createdAt desc")
+    @Query("select a from QauteAnswer a where a.approvalStatus = :status order by a.createdAt desc")
     List<Answer> findByStatus(@Param("status") ApprovalStatus status);
 }
 

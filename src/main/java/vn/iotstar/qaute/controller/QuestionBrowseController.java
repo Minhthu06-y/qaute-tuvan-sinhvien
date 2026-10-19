@@ -1,4 +1,4 @@
-﻿package vn.iotstar.qaute.controller;
+package vn.iotstar.qaute.controller;
 
 import vn.iotstar.qaute.entity.QuestionStatus;
 import vn.iotstar.qaute.repository.DepartmentRepository;
@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Set;
 
@@ -17,22 +18,23 @@ import java.util.Set;
 public class QuestionBrowseController {
     private final QuestionBrowseService service;
     private final DepartmentRepository departments;
-    private final ScopeService scope;
 
     @GetMapping("/admin/questions")
     @PreAuthorize("hasRole('ADMIN')")
     public String adminList(@RequestParam(defaultValue = "UNANSWERED") QuestionStatus status,
-                            @RequestParam(required = false) Long deptId, @RequestParam(required = false) String kw,
+                            @RequestParam(required = false) Long deptId, @RequestParam(required = false) String category,
+                            @RequestParam(required = false) String kw,
                             @RequestParam(defaultValue = "0") int page, Model m) {
-        return list("/admin", null, status, deptId, kw, page, m);
+        return list("/admin", null, status, deptId, category, kw, page, m);
     }
 
     @GetMapping("/manager/questions")
     @PreAuthorize("hasRole('MANAGER')")
     public String managerList(@RequestParam(defaultValue = "UNANSWERED") QuestionStatus status,
-                              @RequestParam(required = false) Long deptId, @RequestParam(required = false) String kw,
-                              @RequestParam(defaultValue = "0") int page, Principal p, Model m) {
-        return list("/manager", scope.managerDepartments(p.getName()), status, deptId, kw, page, m);
+                              @RequestParam(required = false) Long deptId, @RequestParam(required = false) String category,
+                              @RequestParam(required = false) String kw,
+                              @RequestParam(defaultValue = "0") int page, Model m) {
+        return list("/manager", null, status, deptId, category, kw, page, m);
     }
 
     @GetMapping("/admin/questions/{id}")
@@ -41,14 +43,28 @@ public class QuestionBrowseController {
 
     @GetMapping("/manager/questions/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public String managerDetail(@PathVariable Long id, Principal p, Model m) {
-        return detail("/manager", scope.managerDepartments(p.getName()), id, m);
+    public String managerDetail(@PathVariable Long id, Model m) {
+        return detail("/manager", null, id, m);
     }
 
-    private String list(String base, Set<Long> allowed, QuestionStatus status, Long deptId, String kw, int page, Model m) {
+    @PostMapping("/manager/questions/{id}/answers")
+    @PreAuthorize("hasRole('MANAGER')")
+    public String answer(@PathVariable Long id, @RequestParam String content, Principal p, RedirectAttributes ra) {
+        if (content == null || content.isBlank()) {
+            ra.addFlashAttribute("err", "Nội dung trả lời không được để trống");
+            return "redirect:/manager/questions/" + id;
+        }
+        service.answer(id, content, p.getName());
+        ra.addFlashAttribute("msg", "Đã gửi câu trả lời cho sinh viên");
+        return "redirect:/manager/questions/" + id;
+    }
+
+    private String list(String base, Set<Long> allowed, QuestionStatus status, Long deptId, String category,
+                        String kw, int page, Model m) {
         m.addAttribute("base", base); m.addAttribute("status", status);
-        m.addAttribute("deptId", deptId); m.addAttribute("kw", kw);
-        m.addAttribute("page", service.search(status, deptId, kw, allowed, page, 15));
+        m.addAttribute("deptId", deptId); m.addAttribute("category", category); m.addAttribute("kw", kw);
+        m.addAttribute("categories", service.categories(allowed));
+        m.addAttribute("page", service.search(status, deptId, category, kw, allowed, page, 15));
         m.addAttribute("counts", service.counts(allowed));
         m.addAttribute("departments", allowed == null ? departments.findAll() : departments.findAllById(allowed));
         return "questions/list";
