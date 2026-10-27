@@ -13,8 +13,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import vn.iotstar.qaute.enums.UserStatus;
-import vn.iotstar.qaute.repository.UserRepository;
+import vn.iotstar.enums.UserStatus;
+import vn.iotstar.repository.UserRepository;
 import vn.iotstar.repository.UserAccountRepository;
 
 @Component

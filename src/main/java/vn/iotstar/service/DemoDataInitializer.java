@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import vn.iotstar.model.*;
 import vn.iotstar.repository.*;
+import vn.iotstar.enums.*;
 
 @Component
 @Order(2)

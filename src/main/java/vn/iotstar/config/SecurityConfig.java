@@ -19,7 +19,11 @@ public class SecurityConfig {
         return http.csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/qaute/auth/**", "/api/qaute/questions/public", "/api/health", "/css/**", "/js/**", "/images/**", "/webjars/**", "/h2-console/**", "/ws/**", "/login", "/register", "/", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/qaute/auth/**", 
+                        		"/api/qaute/questions/public", "/api/health", 
+                        		"/css/**", "/js/**", "/images/**", "/webjars/**", 
+                        		"/h2-console/**", "/ws/**", "/login", "/register", 
+                        		"/", "/error").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults())

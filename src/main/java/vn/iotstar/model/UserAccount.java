@@ -11,10 +11,13 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import vn.iotstar.enums.AccountRole;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
 
 @Entity
 @Table(name = "user_accounts", uniqueConstraints = @UniqueConstraint(columnNames = "email"))

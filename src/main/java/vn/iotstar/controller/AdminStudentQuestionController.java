@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import vn.iotstar.model.Answer;
 import vn.iotstar.model.Faculty;
 import vn.iotstar.model.Question;
-import vn.iotstar.model.QuestionStatus;
+import vn.iotstar.enums.*;
 import vn.iotstar.repository.AnswerRepository;
 import vn.iotstar.repository.FacultyRepository;
 import vn.iotstar.repository.QuestionRepository;

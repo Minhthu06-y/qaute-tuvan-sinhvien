@@ -2,7 +2,8 @@ package vn.iotstar.service;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
-import vn.iotstar.model.AccountRole;
+
+import vn.iotstar.enums.AccountRole;
 import vn.iotstar.model.UserAccount;
 import vn.iotstar.repository.UserAccountRepository;
 

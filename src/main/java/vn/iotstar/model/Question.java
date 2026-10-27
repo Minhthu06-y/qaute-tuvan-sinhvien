@@ -1,5 +1,6 @@
 package vn.iotstar.model;
 
+import vn.iotstar.enums.*;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

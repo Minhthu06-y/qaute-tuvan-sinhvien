@@ -28,7 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
-import vn.iotstar.model.AccountRole;
+
 import vn.iotstar.model.Faculty;
 import vn.iotstar.model.UserAccount;
 import vn.iotstar.repository.FacultyRepository;
@@ -36,12 +36,11 @@ import vn.iotstar.repository.UserAccountRepository;
 import vn.iotstar.security.JwtService;
 import vn.iotstar.service.SessionContext;
 import vn.iotstar.service.AdvisorPresenceService;
-import vn.iotstar.qaute.entity.Role;
-import vn.iotstar.qaute.entity.User;
-import vn.iotstar.qaute.service.OtpService;
-import vn.iotstar.qaute.service.DeletedAccountEmailService;
-import vn.iotstar.qaute.enums.UserStatus;
-import vn.iotstar.qaute.repository.UserRepository;
+import vn.iotstar.entity.User;
+import vn.iotstar.service.OtpService;
+import vn.iotstar.service.DeletedAccountEmailService;
+import vn.iotstar.enums.*;
+import vn.iotstar.repository.UserRepository;
 
 @Controller
 public class AuthController {

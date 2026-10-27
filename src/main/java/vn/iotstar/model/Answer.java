@@ -1,5 +1,6 @@
 package vn.iotstar.model;
 
+import vn.iotstar.enums.*;
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
