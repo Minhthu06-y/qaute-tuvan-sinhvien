@@ -13,8 +13,8 @@ public class StatsDto {
     List<AdvisorStat> topAdvisors;
     List<DeptStat> byDepartment;
     List<RatingStat> advisorRatings;        // điểm TB theo tư vấn viên trong kỳ
-    long managerAnswerLikes, managerAnswerDislikes;
-    List<VoteDeptStat> managerAnswerVotes;
+    long answerLikes, answerDislikes;
+    List<VoteDeptStat> answerVotesByDepartment;
 
     @Value public static class AdvisorStat { String name; String email; long answers; }
     @Value public static class DeptStat { String name; long total; long answered; long unanswered; }

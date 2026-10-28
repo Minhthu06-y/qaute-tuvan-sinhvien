@@ -1,6 +1,7 @@
 package vn.iotstar.service;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -30,8 +31,8 @@ public class AnswerVoteService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu trả lời"));
         if (answer.getQuestion().isDeleted()) throw new IllegalArgumentException("Câu hỏi này đã được gỡ");
         Role authorRole = answer.getAuthor().getRole();
-        if (authorRole != Role.MANAGER && authorRole != Role.CONSULTANT)
-            throw new AccessDeniedException("Chỉ đánh giá câu trả lời của Manager hoặc tư vấn viên");
+        if (!EnumSet.of(Role.MANAGER, Role.CONSULTANT, Role.ADMIN).contains(authorRole))
+            throw new AccessDeniedException("Chỉ đánh giá câu trả lời của tư vấn viên, Manager hoặc Admin");
         if (answer.getApprovalStatus() != ApprovalStatus.APPROVED
                 && answer.getApprovalStatus() != ApprovalStatus.NOT_REQUIRED)
             throw new IllegalArgumentException("Chỉ đánh giá được câu trả lời đã đăng");

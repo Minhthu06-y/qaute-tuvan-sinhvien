@@ -273,7 +273,7 @@ public class QuestionController {
         boolean canManage = managerScope || (viewer.isAdvisor() && canHandle(viewer, question));
         model.addAttribute("canManageQuestion", canManage && !question.isLocked());
         model.addAttribute("canAnswerQuestion", managerScope || (!question.isLocked()
-                && viewer.isAdvisor() && canHandle(viewer, question)));
+                && (viewer.role() == Role.ADMIN || (viewer.isAdvisor() && canHandle(viewer, question)))));
         model.addAttribute("canReportQuestion", viewer.isAdvisor() && canHandle(viewer, question));
         Map<Long, VoteSummary> voteSummaries = new HashMap<>();
         Set<Long> editableAnswerIds = new HashSet<>();
@@ -443,6 +443,7 @@ public class QuestionController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
     private void ensureCanAnswer(SessionContext.Viewer viewer, Question question) {
+        if (viewer.role() == Role.ADMIN) return;
         if (viewer.isManager()) {
             if (!managerCanAccess(viewer, question)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             return;

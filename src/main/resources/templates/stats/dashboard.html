@@ -28,15 +28,15 @@
       </div>
 
       <div class="admin-stats">
-        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-up"></i></span><span><strong th:text="${stats.managerAnswerLikes}">0</strong><small>Like câu trả lời Manager</small></span></div>
-        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-down"></i></span><span><strong th:text="${stats.managerAnswerDislikes}">0</strong><small>Dislike câu trả lời Manager</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-up"></i></span><span><strong th:text="${stats.answerLikes}">0</strong><small>Like câu trả lời</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-down"></i></span><span><strong th:text="${stats.answerDislikes}">0</strong><small>Dislike câu trả lời</small></span></div>
       </div>
 
       <section class="admin-card mb-3">
-        <div class="admin-card-head"><div><h2>Đánh giá câu trả lời Manager theo khoa</h2><p>Lượt like và dislike trong khoảng thời gian đã chọn.</p></div></div>
+        <div class="admin-card-head"><div><h2>Đánh giá câu trả lời theo khoa</h2><p>Lượt like và dislike câu trả lời của tư vấn viên, Manager và Admin trong khoảng thời gian đã chọn.</p></div></div>
         <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Khoa / đơn vị</th><th>Like</th><th>Dislike</th></tr></thead><tbody>
-          <tr th:each="vote : ${stats.managerAnswerVotes}"><td class="admin-primary-text" th:text="${vote.name}">Khoa</td><td th:text="${vote.likes}">0</td><td th:text="${vote.dislikes}">0</td></tr>
-          <tr th:if="${#lists.isEmpty(stats.managerAnswerVotes)}"><td colspan="3" class="admin-empty">Chưa có đánh giá câu trả lời Manager trong kỳ.</td></tr>
+          <tr th:each="vote : ${stats.answerVotesByDepartment}"><td class="admin-primary-text" th:text="${vote.name}">Khoa</td><td th:text="${vote.likes}">0</td><td th:text="${vote.dislikes}">0</td></tr>
+          <tr th:if="${#lists.isEmpty(stats.answerVotesByDepartment)}"><td colspan="3" class="admin-empty">Chưa có đánh giá câu trả lời trong kỳ.</td></tr>
         </tbody></table></div>
       </section>
 

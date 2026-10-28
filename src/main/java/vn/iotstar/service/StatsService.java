@@ -118,24 +118,25 @@ public class StatsService {
             Question question = answer.getQuestion();
             Department department = question.getDepartment();
             if (vote.getCreatedAt() == null || vote.getCreatedAt().isBefore(from) || !vote.getCreatedAt().isBefore(to)
-                    || question.isDeleted() || answer.getAuthor().getRole() != Role.MANAGER
+                    || question.isDeleted()
+                    || !EnumSet.of(Role.MANAGER, Role.CONSULTANT, Role.ADMIN).contains(answer.getAuthor().getRole())
                     || !ScopeService.allows(allowedDepartments, department)) continue;
             String departmentName = department == null ? "Chưa phân khoa" : department.getName();
             long[] counts = voteCounts.computeIfAbsent(departmentName, ignored -> new long[2]);
             if (vote.getVoteType() == vn.iotstar.enums.VoteType.LIKE) counts[0]++;
             else counts[1]++;
         }
-        List<VoteDeptStat> managerAnswerVotes = voteCounts.entrySet().stream()
+        List<VoteDeptStat> answerVotesByDepartment = voteCounts.entrySet().stream()
                 .map(entry -> new VoteDeptStat(entry.getKey(), entry.getValue()[0], entry.getValue()[1])).toList();
-        long managerLikes = managerAnswerVotes.stream().mapToLong(VoteDeptStat::getLikes).sum();
-        long managerDislikes = managerAnswerVotes.stream().mapToLong(VoteDeptStat::getDislikes).sum();
+        long answerLikes = answerVotesByDepartment.stream().mapToLong(VoteDeptStat::getLikes).sum();
+        long answerDislikes = answerVotesByDepartment.stream().mapToLong(VoteDeptStat::getDislikes).sum();
 
         return new StatsDto(month ? "month" : "week", fromDate.toString(), today.toString(),
                 total, answered, unanswered, totalAnswers, answers.findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus.PENDING)
                         .stream().filter(answer -> !answer.getQuestion().isDeleted())
                         .filter(answer -> ScopeService.allows(allowedDepartments, answer.getQuestion().getDepartment())).count(),
                 averageRating, labels, questionSeries, answerSeries, topAdvisors,
-                byDepartment, ratings, managerLikes, managerDislikes, managerAnswerVotes);
+                byDepartment, ratings, answerLikes, answerDislikes, answerVotesByDepartment);
     }
 
     @Transactional(readOnly = true)
