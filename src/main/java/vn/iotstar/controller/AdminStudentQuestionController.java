@@ -15,23 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import jakarta.validation.Valid;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
-import java.time.LocalDateTime;
-import vn.iotstar.dto.AdminQuestionForm;
-import vn.iotstar.entity.Department;
-import vn.iotstar.enums.Role;
-import vn.iotstar.model.FacultyTopic;
-import vn.iotstar.repository.DepartmentRepository;
-import vn.iotstar.repository.FacultyTopicRepository;
-import vn.iotstar.repository.UserRepository;
 import vn.iotstar.service.QuestionModerationService;
 import vn.iotstar.model.Answer;
-import vn.iotstar.model.Faculty;
 import vn.iotstar.model.Question;
 import vn.iotstar.enums.*;
 import vn.iotstar.repository.AnswerRepository;
@@ -46,57 +34,14 @@ public class AdminStudentQuestionController {
     private final QuestionRepository questions;
     private final AnswerRepository answers;
     private final FacultyRepository faculties;
-    private final FacultyTopicRepository topics;
-    private final UserRepository users;
-    private final DepartmentRepository departments;
     private final QuestionModerationService moderation;
 
     public AdminStudentQuestionController(QuestionRepository questions, AnswerRepository answers,
-            FacultyRepository faculties, FacultyTopicRepository topics, UserRepository users,
-            DepartmentRepository departments, QuestionModerationService moderation) {
+            FacultyRepository faculties, QuestionModerationService moderation) {
         this.questions = questions;
         this.answers = answers;
         this.faculties = faculties;
-        this.topics = topics;
-        this.users = users;
-        this.departments = departments;
         this.moderation = moderation;
-    }
-
-    @GetMapping("/new")
-    public String newForm(Model model) {
-        if (!model.containsAttribute("form")) model.addAttribute("form", new AdminQuestionForm());
-        return formModel(model);
-    }
-
-    @PostMapping("/new")
-    public String create(@Valid @ModelAttribute("form") AdminQuestionForm form, BindingResult binding,
-            Model model, Principal principal, RedirectAttributes flash) {
-        if (!binding.hasErrors()) {
-            try {
-                vn.iotstar.entity.User asker = users.findById(form.getAskerId())
-                        .filter(user -> user.getRole() == Role.USER && !user.isDeleted())
-                        .orElseThrow(() -> new IllegalArgumentException("Chỉ chọn tài khoản người dùng đang hoạt động"));
-                vn.iotstar.model.Faculty faculty = faculties.findById(form.getFacultyId())
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khoa"));
-                FacultyTopic topic = topics.findById(form.getTopicId())
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chuyên đề"));
-                if (!topic.getFaculty().getId().equals(faculty.getId()))
-                    throw new IllegalArgumentException("Chuyên đề không thuộc khoa đã chọn");
-                String subject = form.getSubject().trim();
-                Question question = new Question(asker, faculty, subject, form.getBody().trim(), LocalDateTime.now());
-                question.setTopic(topic);
-                question.setDepartment(departmentFor(faculty));
-                question.setPublic(form.isPublicQuestion());
-                question.setStatus(QuestionStatus.UNANSWERED);
-                questions.save(question);
-                flash.addFlashAttribute("msg", "Đã thêm câu hỏi");
-                return "redirect:/admin/student-questions/" + question.getId();
-            } catch (IllegalArgumentException error) {
-                binding.reject("custom", error.getMessage());
-            }
-        }
-        return formModel(model);
     }
 
     @GetMapping
@@ -142,19 +87,6 @@ public class AdminStudentQuestionController {
         moderation.deleteByAdmin(id, principal.getName());
         flash.addFlashAttribute("msg", "Đã gỡ câu hỏi khỏi danh sách hiển thị.");
         return "redirect:/admin/student-questions";
-    }
-
-    private String formModel(Model model) {
-        model.addAttribute("users", users.findByRole(Role.USER).stream().filter(user -> !user.isDeleted()).toList());
-        model.addAttribute("faculties", faculties.findAll());
-        model.addAttribute("topics", topics.findAllByOrderByFacultyIdAscIdAsc());
-        return "admin/student-question-form";
-    }
-
-    private Department departmentFor(vn.iotstar.model.Faculty faculty) {
-        return departments.findAll().stream()
-                .filter(department -> department.getName().trim().equalsIgnoreCase(faculty.getName().trim()))
-                .findFirst().orElseGet(() -> departments.save(new Department(faculty.getName().trim())));
     }
 
     private QuestionStatus parseStatus(String status) {
