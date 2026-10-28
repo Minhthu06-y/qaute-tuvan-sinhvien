@@ -39,13 +39,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 String token = header.substring(7);
                 String email = jwtService.subject(token);
-                String tokenRole = jwtService.role(token);
                 User user = users.findByEmailIgnoreCase(email).orElse(null);
                 if (user == null || !user.isEnabled() || user.isDeleted()
-                        || user.getStatus() != UserStatus.ACTIVE || user.getRole() == null
-                        || !user.getRole().name().equals(tokenRole)) {
+                        || user.getStatus() != UserStatus.ACTIVE || user.getRole() == null) {
                     SecurityContextHolder.clearContext();
                 } else {
+                    // The database is the source of truth so role changes apply to existing tokens immediately.
                     Role role = user.getRole();
                     List<SimpleGrantedAuthority> authorities = List.of(
                             new SimpleGrantedAuthority("ROLE_" + role.name()));

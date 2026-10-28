@@ -18,6 +18,7 @@ import vn.iotstar.entity.User;
 import vn.iotstar.enums.AdvisorApplicationStatus;
 import vn.iotstar.enums.AdvisorStatus;
 import vn.iotstar.enums.AdvisorType;
+import vn.iotstar.enums.AudienceType;
 import vn.iotstar.enums.Role;
 import vn.iotstar.enums.UserStatus;
 import vn.iotstar.model.Faculty;
@@ -75,12 +76,16 @@ public class AdvisorApplicationService {
         application.setAudience(form.getAudience());
         application.setMotivation(form.getMotivation() == null ? null : form.getMotivation().trim());
         if (form.getPhone() != null && !form.getPhone().isBlank()) applicant.setPhone(form.getPhone().trim());
-        users.save(applicant);
+        activateApplicant(applicant, faculty, department, topic, form.getAdvisorType(), form.getAudience());
+        application.setStatus(AdvisorApplicationStatus.APPROVED);
+        application.setReviewNote("Tài khoản đã được kích hoạt quyền tư vấn viên khi đăng ký.");
+        application.setReviewedAt(LocalDateTime.now());
         AdvisorApplication saved = applications.save(application);
         notifications.notifyManagers(faculty.getId(), "advisor-application",
-                "Có yêu cầu mới làm tư vấn viên cần xem xét.", null, "/manager/advisor-applications");
-        notifications.notifyAdmins("advisor-application", "Có yêu cầu mới làm tư vấn viên cần xem xét.",
-                "/admin/advisor-applications");
+                "Tư vấn viên mới đã được kích hoạt.", null, "/manager/advisors");
+        notifications.notifyAdmins("advisor-registration", "Tư vấn viên mới đã được kích hoạt.",
+                "/admin/advisors");
+        logs.log(applicant.getEmail(), Role.USER.name(), "REGISTER_ADVISOR", applicant.getEmail());
         return saved;
     }
 
@@ -105,26 +110,8 @@ public class AdvisorApplicationService {
         if (applicant.getRole() != Role.USER)
             throw new FieldException("decision", "Tài khoản không còn đủ điều kiện làm tư vấn viên");
         Faculty faculty = facultyFor(application.getDepartment());
-        AdvisorProfile profile = profiles.findByUserId(applicant.getId()).orElseGet(AdvisorProfile::new);
-        profile.setUser(applicant);
-        profile.setDepartment(application.getDepartment());
-        profile.setAdvisorType(application.getAdvisorType());
-        profile.setAudience(application.getAudience());
-        profile.setStatus(AdvisorStatus.ACTIVE);
-        profile.setHead(false);
-        profile.setDeleted(false);
-        profile.setDeletedAt(null);
-        profile.setDeletedBy(null);
-
-        applicant.setRole(Role.CONSULTANT);
-        applicant.setStatus(UserStatus.ACTIVE);
-        applicant.setEnabled(true);
-        applicant.setFaculty(faculty);
-        applicant.setTitle(application.getAdvisorType().getLabel());
-        applicant.setConsultantTitles(new HashSet<>(Set.of(application.getAdvisorType())));
-        applicant.setAssignedTopics(Set.of(application.getTopic()));
-        users.save(applicant);
-        profiles.save(profile);
+        activateApplicant(applicant, faculty, application.getDepartment(), application.getTopic(),
+                application.getAdvisorType(), application.getAudience());
         finish(application, reviewer, AdvisorApplicationStatus.APPROVED, "Đã duyệt yêu cầu làm tư vấn viên.");
         notifications.notify(applicant, "Yêu cầu làm tư vấn viên đã được duyệt.", "/questions");
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "APPROVE_ADVISOR_APPLICATION", applicant.getEmail());
@@ -168,6 +155,30 @@ public class AdvisorApplicationService {
         application.setReviewNote(note);
         application.setReviewedAt(LocalDateTime.now());
         applications.save(application);
+    }
+
+    private void activateApplicant(User applicant, Faculty faculty, Department department,
+            FacultyTopic topic, AdvisorType advisorType, AudienceType audience) {
+        AdvisorProfile profile = profiles.findByUserId(applicant.getId()).orElseGet(AdvisorProfile::new);
+        profile.setUser(applicant);
+        profile.setDepartment(department);
+        profile.setAdvisorType(advisorType);
+        profile.setAudience(audience);
+        profile.setStatus(AdvisorStatus.ACTIVE);
+        profile.setHead(false);
+        profile.setDeleted(false);
+        profile.setDeletedAt(null);
+        profile.setDeletedBy(null);
+
+        applicant.setRole(Role.CONSULTANT);
+        applicant.setStatus(UserStatus.ACTIVE);
+        applicant.setEnabled(true);
+        applicant.setFaculty(faculty);
+        applicant.setTitle(advisorType.getLabel());
+        applicant.setConsultantTitles(new HashSet<>(Set.of(advisorType)));
+        applicant.setAssignedTopics(Set.of(topic));
+        users.save(applicant);
+        profiles.save(profile);
     }
 
     private Faculty facultyFor(Department department) {

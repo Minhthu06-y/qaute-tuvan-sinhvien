@@ -22,7 +22,7 @@ import vn.iotstar.service.SessionContext;
 
 @Controller
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER', 'CONSULTANT')")
 public class AdvisorApplicationController {
     private final AdvisorApplicationService applications;
     private final DepartmentRepository departments;
@@ -32,7 +32,8 @@ public class AdvisorApplicationController {
     @GetMapping("/advisor-application")
     public String page(HttpSession session, Model model) {
         var viewer = sessionContext.viewer(session);
-        if (viewer == null || !viewer.isStudent()) return "redirect:/questions";
+        if (viewer == null || !viewer.isStudent())
+            return viewer != null && viewer.isAdvisor() ? "redirect:/account" : "redirect:/questions";
         if (!model.containsAttribute("form")) model.addAttribute("form", new AdvisorApplicationForm());
         model.addAttribute("latestApplication", applications.latest(viewer.user().getId()));
         return formModel(model);
@@ -42,12 +43,13 @@ public class AdvisorApplicationController {
     public String submit(@Valid @ModelAttribute("form") AdvisorApplicationForm form, BindingResult binding,
             HttpSession session, Model model, RedirectAttributes flash) {
         var viewer = sessionContext.viewer(session);
-        if (viewer == null || !viewer.isStudent()) return "redirect:/questions";
+        if (viewer == null || !viewer.isStudent())
+            return viewer != null && viewer.isAdvisor() ? "redirect:/account" : "redirect:/questions";
         if (!binding.hasErrors()) {
             try {
                 applications.submit(viewer.user(), form);
-                flash.addFlashAttribute("success", "Đã gửi yêu cầu làm tư vấn viên để Manager xem xét.");
-                return "redirect:/advisor-application";
+                flash.addFlashAttribute("success", "Đăng ký thành công. Tài khoản đã được cập nhật vai trò và quyền tư vấn viên.");
+                return "redirect:/account";
             } catch (FieldException error) {
                 binding.rejectValue(error.getField(), "custom", error.getMessage());
             }
