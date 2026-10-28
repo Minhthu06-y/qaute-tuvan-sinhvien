@@ -2,6 +2,7 @@ package vn.iotstar.enums;
 
 public enum AdvisorType {
     STUDENT("Sinh viên"),
+    ADVISOR("Tư vấn viên"),
     LECTURER("Giảng viên"),
     STAFF("Cán bộ"),
     TEAM_LEADER("Trưởng ban cố vấn");

@@ -11,7 +11,7 @@ import vn.iotstar.model.Question;
 import vn.iotstar.repository.FacultyRepository;
 import vn.iotstar.repository.QuestionRepository;
 
-/** Public landing page: it does not require a demo or signed-in user session. */
+/** Public landing page for questions shared with everyone. */
 @Controller
 public class HomeController {
     private final QuestionRepository questions;

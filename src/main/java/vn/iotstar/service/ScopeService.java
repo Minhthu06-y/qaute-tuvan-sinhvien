@@ -4,6 +4,7 @@ import vn.iotstar.entity.Department;
 import vn.iotstar.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class ScopeService {
     private final UserRepository users;
 
+    @Transactional(readOnly = true)
     public Set<Long> managerDepartments(String email) {
         return users.findByEmailIgnoreCase(email)
                 .map(u -> u.getManagedDepartments().stream().map(Department::getId).collect(Collectors.toSet()))

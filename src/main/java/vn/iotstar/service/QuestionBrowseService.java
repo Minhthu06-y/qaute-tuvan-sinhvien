@@ -1,88 +1,106 @@
 package vn.iotstar.service;
 
-import vn.iotstar.entity.*;
-import vn.iotstar.enums.*;
-import vn.iotstar.repository.*;
+import vn.iotstar.entity.User;
+import vn.iotstar.enums.ApprovalStatus;
+import vn.iotstar.enums.QuestionStatus;
+import vn.iotstar.model.Answer;
+import vn.iotstar.model.Question;
+import vn.iotstar.repository.AnswerRepository;
+import vn.iotstar.repository.QuestionRepository;
+import vn.iotstar.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class QuestionBrowseService {
-    private final QauteQuestionRepository questions;
-    private final QauteAnswerRepository answers;
+    private final QuestionRepository questions;
+    private final AnswerRepository answers;
     private final UserRepository users;
     private final NotificationService notifications;
     private final ActivityLogService logs;
 
-    /** allowed: null = tất cả (Admin); rỗng = không khoa nào. */
     public Page<Question> search(QuestionStatus status, Long deptId, String category, String kw,
                                  Set<Long> allowed, int page, int size) {
-        String k = kw == null ? "" : kw.trim().toLowerCase();
+        String keyword = kw == null ? "" : kw.trim().toLowerCase(Locale.ROOT);
         String selectedCategory = category == null ? "" : category.trim();
         List<Question> all = questions.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
-                .filter(q -> ScopeService.allows(allowed, q.getDepartment()))
-                .filter(q -> status == null || q.getStatus() == status)
-                .filter(q -> deptId == null || (q.getDepartment() != null && q.getDepartment().getId().equals(deptId)))
-                .filter(q -> selectedCategory.isEmpty() || (q.getCategory() != null && q.getCategory().equalsIgnoreCase(selectedCategory)))
-                .filter(q -> k.isEmpty()
-                        || (q.getTitle() != null && q.getTitle().toLowerCase().contains(k))
-                        || (q.getAsker() != null && q.getAsker().getFullName() != null && q.getAsker().getFullName().toLowerCase().contains(k)))
+                .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
+                .filter(question -> status == null || matchesStatus(question.getStatus(), status))
+                .filter(question -> deptId == null || (question.getDepartment() != null
+                        && question.getDepartment().getId().equals(deptId)))
+                .filter(question -> selectedCategory.isEmpty() || (question.getCategory() != null
+                        && question.getCategory().equalsIgnoreCase(selectedCategory)))
+                .filter(question -> keyword.isEmpty()
+                        || (question.getTitle() != null && question.getTitle().toLowerCase(Locale.ROOT).contains(keyword))
+                        || (question.getAsker() != null && question.getAsker().getFullName() != null
+                                && question.getAsker().getFullName().toLowerCase(Locale.ROOT).contains(keyword)))
                 .toList();
-        int from = Math.min(page * size, all.size()), to = Math.min(from + size, all.size());
+        int from = Math.min(page * size, all.size());
+        int to = Math.min(from + size, all.size());
         return new PageImpl<>(all.subList(from, to), PageRequest.of(page, size), all.size());
     }
 
     public List<String> categories(Set<Long> allowed) {
         return questions.findAll().stream()
-                .filter(q -> ScopeService.allows(allowed, q.getDepartment()))
-                .map(Question::getCategory).filter(category -> category != null && !category.isBlank())
-                .map(String::trim).distinct().sorted(String.CASE_INSENSITIVE_ORDER).toList();
+                .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
+                .map(Question::getCategory)
+                .filter(category -> category != null && !category.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
     }
 
-    /** Số câu theo từng trạng thái (hiện trên tab). */
     public Map<String, Long> counts(Set<Long> allowed) {
-        Map<String, Long> m = new LinkedHashMap<>();
-        for (QuestionStatus s : QuestionStatus.values()) m.put(s.name(), 0L);
-        questions.findAll().stream().filter(q -> ScopeService.allows(allowed, q.getDepartment()))
-                .forEach(q -> m.merge(q.getStatus().name(), 1L, Long::sum));
-        return m;
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (QuestionStatus status : QuestionStatus.values()) counts.put(status.name(), 0L);
+        questions.findAll().stream()
+                .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
+                .forEach(question -> counts.merge(normalizeStatus(question.getStatus()).name(), 1L, Long::sum));
+        return counts;
     }
 
     public Question get(Long id, Set<Long> allowed) {
-        Question q = questions.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu hỏi"));
-        if (!ScopeService.allows(allowed, q.getDepartment()))
+        Question question = questions.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu hỏi"));
+        if (!ScopeService.allows(allowed, question.getDepartment()))
             throw new AccessDeniedException("Câu hỏi không thuộc khoa bạn phụ trách");
-        return q;
+        return question;
     }
 
-    public List<Answer> thread(Long questionId) { return answers.findByQuestion_IdOrderByCreatedAtAsc(questionId); }
+    public List<Answer> thread(Long questionId) {
+        return answers.findByQuestionIdOrderByCreatedAtAsc(questionId);
+    }
 
     @Transactional
-    public void answer(Long questionId, String content, String managerEmail) {
-        Question question = get(questionId, null);
+    public void answer(Long questionId, String content, String managerEmail, Set<Long> allowed) {
+        Question question = get(questionId, allowed);
         User manager = users.findByEmailIgnoreCase(managerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản trưởng ban cố vấn"));
-        Answer answer = new Answer();
-        answer.setQuestion(question);
-        answer.setAdvisor(manager);
-        answer.setContent(content.trim());
-        answer.setNeedApproval(false);
-        answer.setApprovalStatus(ApprovalStatus.APPROVED);
-        answer.setPublished(true);
-        answer.setApproved(true);
+        Answer answer = new Answer(question, manager, content.trim(), LocalDateTime.now(), ApprovalStatus.NOT_REQUIRED);
         answers.save(answer);
 
         question.setStatus(QuestionStatus.ANSWERED);
+        question.setReplyNotification(true);
         questions.save(question);
         if (question.getAsker() != null) {
-            notifications.notify(question.getAsker(), "Trưởng ban cố vấn đã trả lời câu hỏi: " + question.getTitle(), "/");
+            notifications.notify(question.getAsker(),
+                    "Trưởng ban cố vấn đã trả lời câu hỏi: " + question.getTitle(), "/");
         }
         logs.log(managerEmail, "MANAGER", "ANSWER_QUESTION", "question#" + questionId);
     }
-}
 
+    private boolean matchesStatus(QuestionStatus actual, QuestionStatus requested) {
+        return normalizeStatus(actual) == normalizeStatus(requested);
+    }
+
+    private QuestionStatus normalizeStatus(QuestionStatus status) {
+        return status == QuestionStatus.OPEN ? QuestionStatus.UNANSWERED : status;
+    }
+}

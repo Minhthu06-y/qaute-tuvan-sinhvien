@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
+import vn.iotstar.model.Faculty;
+import vn.iotstar.model.FacultyTopic;
 
 @Service
 @RequiredArgsConstructor
@@ -20,12 +23,15 @@ public class AdvisorService {
     private final AdvisorProfileRepository advisors;
     private final UserRepository users;
     private final DepartmentRepository departments;
+    private final FacultyRepository faculties;
+    private final FacultyTopicRepository topics;
     private final ActivityLogService logs;
 
     public List<AdvisorProfile> search(String kw, Long deptId, AdvisorStatus status) {
         String k = kw == null ? "" : kw.trim().toLowerCase();
         return advisors.findAll().stream()
                 .filter(a -> !a.isDeleted())
+                .filter(a -> a.getUser() != null && a.getDepartment() != null)
                 .filter(a -> deptId == null || a.getDepartment().getId().equals(deptId))
                 .filter(a -> status == null || a.getStatus() == status)
                 .filter(a -> k.isEmpty()
@@ -38,6 +44,7 @@ public class AdvisorService {
     public List<AdvisorProfile> inDepartments(Set<Long> allowed) {
         return advisors.findAll().stream()
                 .filter(a -> !a.isDeleted())
+                .filter(a -> a.getUser() != null && a.getDepartment() != null)
                 .filter(a -> ScopeService.allows(allowed, a.getDepartment()))
                 .sorted((x, y) -> x.getDepartment().getName().compareToIgnoreCase(y.getDepartment().getName()))
                 .toList();
@@ -70,6 +77,14 @@ public class AdvisorService {
                 .orElseThrow(() -> new FieldException("departmentId", "Khoa không tồn tại"));
         u.setFullName(f.getFullName().trim());
         u.setPhone(f.getPhone().trim());
+        if (u.getRole() != Role.MANAGER) {
+            u.setRole(f.getStatus() == AdvisorStatus.ACTIVE ? Role.CONSULTANT : Role.USER);
+        }
+        syncConsultantTitle(u, f.getAdvisorType());
+        u.setAssignedTopics(resolveAssignedTopics(d, f.getTopicIds()));
+        faculties.findAll().stream()
+                .filter(faculty -> faculty.getName().equalsIgnoreCase(d.getName()))
+                .findFirst().ifPresent(u::setFaculty);
 
         boolean restored = existing.isPresent();      // từng bị gỡ -> khôi phục hồ sơ cũ, không tạo trùng
         AdvisorProfile p = existing.orElseGet(AdvisorProfile::new);
@@ -89,6 +104,14 @@ public class AdvisorService {
                 .orElseThrow(() -> new FieldException("departmentId", "Khoa không tồn tại"));
         p.getUser().setFullName(f.getFullName().trim());
         p.getUser().setPhone(f.getPhone().trim());
+        if (p.getUser().getRole() != Role.MANAGER) {
+            p.getUser().setRole(f.getStatus() == AdvisorStatus.ACTIVE ? Role.CONSULTANT : Role.USER);
+        }
+        syncConsultantTitle(p.getUser(), f.getAdvisorType());
+        p.getUser().setAssignedTopics(resolveAssignedTopics(d, f.getTopicIds()));
+        faculties.findAll().stream()
+                .filter(faculty -> faculty.getName().equalsIgnoreCase(d.getName()))
+                .findFirst().ifPresent(p.getUser()::setFaculty);
         boolean moved = !p.getDepartment().getId().equals(d.getId());
         p.setDepartment(d); p.setAdvisorType(f.getAdvisorType());
         p.setAudience(f.getAudience()); p.setStatus(f.getStatus());
@@ -97,12 +120,15 @@ public class AdvisorService {
         logs.log(actor, "ADMIN", "UPDATE_ADVISOR", p.getUser().getEmail());
     }
 
-    /** INACTIVE: khoá quyền tư vấn viên, user vẫn hỏi được như user thường. */
+    /** INACTIVE: trả tài khoản về quyền USER; chỉ hồ sơ ACTIVE mới giữ Role.CONSULTANT. */
     @Transactional
     public AdvisorStatus toggleStatus(Long id, String actor) {
         AdvisorProfile p = get(id);
         p.setStatus(p.getStatus() == AdvisorStatus.ACTIVE ? AdvisorStatus.INACTIVE : AdvisorStatus.ACTIVE);
         if (p.getStatus() == AdvisorStatus.INACTIVE) p.setHead(false);
+        if (p.getUser().getRole() != Role.MANAGER) {
+            p.getUser().setRole(p.getStatus() == AdvisorStatus.ACTIVE ? Role.CONSULTANT : Role.USER);
+        }
         logs.log(actor, "ADMIN", p.getStatus() == AdvisorStatus.ACTIVE ? "ACTIVATE_ADVISOR" : "DEACTIVATE_ADVISOR",
                 p.getUser().getEmail());
         return p.getStatus();
@@ -117,6 +143,7 @@ public class AdvisorService {
         AdvisorProfile p = get(id);
         p.setDeleted(true); p.setDeletedAt(LocalDateTime.now()); p.setDeletedBy(actor);
         p.setStatus(AdvisorStatus.INACTIVE); p.setHead(false);
+        if (p.getUser().getRole() == Role.CONSULTANT) p.getUser().setRole(Role.USER);
         logs.log(actor, "ADMIN", "REMOVE_ADVISOR", p.getUser().getEmail() + " @ " + p.getDepartment().getName());
     }
 
@@ -144,6 +171,29 @@ public class AdvisorService {
                     .forEach(o -> { if (o.getId() != null && !o.getId().equals(p.getId())) o.setHead(false); });
         }
         p.setHead(head);
+    }
+
+    private void syncConsultantTitle(User user, AdvisorType advisorType) {
+        if (advisorType == null) return;
+        user.setConsultantTitles(Set.of(advisorType));
+    }
+
+    public List<FacultyTopic> topicCatalog() {
+        return topics.findAllByOrderByFacultyIdAscIdAsc();
+    }
+
+    private Set<FacultyTopic> resolveAssignedTopics(Department department, Set<Long> topicIds) {
+        if (topicIds == null || topicIds.isEmpty()) return Set.of();
+        Faculty faculty = faculties.findAll().stream()
+                .filter(candidate -> candidate.getName().equalsIgnoreCase(department.getName()))
+                .findFirst()
+                .orElseThrow(() -> new FieldException("topicIds", "Đơn vị này chưa có khoa để gắn chuyên đề"));
+        List<FacultyTopic> selected = topics.findAllById(topicIds);
+        if (selected.size() != topicIds.size()
+                || selected.stream().anyMatch(topic -> !topic.getFaculty().getId().equals(faculty.getId()))) {
+            throw new FieldException("topicIds", "Chuyên đề phải thuộc cùng khoa/đơn vị đã chọn");
+        }
+        return new HashSet<>(selected);
     }
 }
 

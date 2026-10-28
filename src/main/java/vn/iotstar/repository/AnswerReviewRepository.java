@@ -17,9 +17,9 @@ public interface AnswerReviewRepository extends JpaRepository<AnswerReview, Long
     @Query("select avg(r.rating) from AnswerReview r where r.rating is not null and r.createdAt >= :from and r.createdAt < :to")
     Double averageRating(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
-    @Query("select r.answer.advisor.fullName, r.answer.advisor.email, avg(r.rating), count(r) from AnswerReview r " +
+    @Query("select r.answer.author.fullName, r.answer.author.email, avg(r.rating), count(r) from AnswerReview r " +
            "where r.rating is not null and r.createdAt >= :from and r.createdAt < :to " +
-           "group by r.answer.advisor.fullName, r.answer.advisor.email order by avg(r.rating) desc")
+           "group by r.answer.author.fullName, r.answer.author.email order by avg(r.rating) desc")
     List<Object[]> advisorRatings(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     List<AnswerReview> findByRatingIsNotNullAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(

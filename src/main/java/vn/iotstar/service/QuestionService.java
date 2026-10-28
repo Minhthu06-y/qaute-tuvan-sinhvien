@@ -1,76 +1,59 @@
 package vn.iotstar.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import vn.iotstar.dto.QuestionRequest;
-import vn.iotstar.entity.Question;
 import vn.iotstar.entity.User;
-import vn.iotstar.enums.*;
-import vn.iotstar.repository.QauteQuestionRepository;
+import vn.iotstar.enums.QuestionStatus;
+import vn.iotstar.model.Question;
+import vn.iotstar.repository.DepartmentRepository;
+import vn.iotstar.repository.QuestionRepository;
 import vn.iotstar.repository.UserRepository;
 
 @Service
 public class QuestionService {
+    private final QuestionRepository questions;
+    private final UserRepository users;
+    private final DepartmentRepository departments;
 
-    private final QauteQuestionRepository questionRepository;
-    private final UserRepository userRepository;
-
-    public QuestionService(
-            QauteQuestionRepository questionRepository,
-            UserRepository userRepository) {
-        this.questionRepository = questionRepository;
-        this.userRepository = userRepository;
+    public QuestionService(QuestionRepository questions, UserRepository users, DepartmentRepository departments) {
+        this.questions = questions;
+        this.users = users;
+        this.departments = departments;
     }
 
     @Transactional(readOnly = true)
     public List<Question> getPublicQuestions() {
-        return questionRepository
-            .findByPublicVisibleTrueOrderByCreatedAtDesc();
+        return questions.findByIsPublicTrueOrderByCreatedAtDesc();
     }
 
     @Transactional(readOnly = true)
     public List<Question> getMyQuestions(String email) {
-        User user = userRepository
-            .findByEmailIgnoreCase(email)
-            .orElseThrow(() -> new IllegalArgumentException(
-                "Không tìm thấy tài khoản."
-            ));
-
-        return questionRepository
-            .findByAsker_IdOrderByCreatedAtDesc(user.getId());
+        User user = users.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        return questions.findByAskerIdOrderByCreatedAtDesc(user.getId());
     }
 
     @Transactional
-    public void createQuestion(
-            String email, QuestionRequest request) {
+    public void createQuestion(String email, QuestionRequest request) {
+        User user = users.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        if (!user.isEnabled() || user.getStatus() != vn.iotstar.enums.UserStatus.ACTIVE)
+            throw new IllegalStateException("Tài khoản không hoạt động.");
 
-        User user = userRepository
-            .findByEmailIgnoreCase(email)
-            .orElseThrow(() -> new IllegalArgumentException(
-                "Không tìm thấy tài khoản."
-            ));
-
-        if (!user.isEnabled()
-                || user.getStatus()
-                    != vn.iotstar.enums.UserStatus.ACTIVE) {
-            throw new IllegalStateException(
-                "Tài khoản không hoạt động."
-            );
-        }
-
-        Question question = new Question();
-        question.setTitle(request.getTitle().trim());
-        question.setContent(request.getContent().trim());
+        Question question = new Question(user, user.getFaculty(), request.getTitle().trim(),
+                request.getContent().trim(), LocalDateTime.now());
         question.setCategory(request.getCategory().trim());
-        question.setAsker(user);
-
-        // Chờ quy trình xét duyệt trước khi công khai.
-        question.setPublicQuestion(false);
         question.setStatus(QuestionStatus.UNANSWERED);
-
-        questionRepository.save(question);
+        if (user.getFaculty() != null) {
+            vn.iotstar.entity.Department matchedDepartment = departments.findAll().stream()
+                    .filter(candidate -> candidate.getName().equalsIgnoreCase(user.getFaculty().getName()))
+                    .findFirst()
+                    .orElseGet(() -> departments.save(new vn.iotstar.entity.Department(user.getFaculty().getName())));
+            question.setDepartment(matchedDepartment);
+        }
+        questions.save(question);
     }
 }

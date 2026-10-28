@@ -2,7 +2,7 @@
   const root = document.getElementById('app-scripts');
   const toast = document.getElementById('live-toast');
   if (!root) return;
-  if (['ADVISOR', 'LECTURER', 'STAFF'].includes(root.dataset.activeRole)) {
+  if (root.dataset.role === 'CONSULTANT') {
     const heartbeat = () => fetch('/presence/heartbeat', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
     heartbeat();
     window.setInterval(heartbeat, 30000);
@@ -25,7 +25,7 @@
         dismissTimer = setTimeout(() => toast.classList.remove('visible'), 9000);
       };
       client.subscribe(`/topic/notifications/${userId}`, showEvent);
-      if (root.dataset.activeRole === 'MANAGER' && root.dataset.facultyId) {
+      if (root.dataset.role === 'MANAGER' && root.dataset.facultyId) {
         client.subscribe(`/topic/faculties/${root.dataset.facultyId}`, showEvent);
       }
     }

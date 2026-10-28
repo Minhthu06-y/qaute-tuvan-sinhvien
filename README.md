@@ -1,37 +1,26 @@
-# Phần Người 3 – Admin + Manager (SQL Server)
+# QAUTE — Tư vấn sinh viên
 
-## Ghép vào repo
-1. Copy `src/` vào project (package `com.hcmute.qaute`), thêm dependency từ `pom-dependencies.xml`,
-   cấu hình DB từ `application.properties.snippet`.
-2. Tạo DB: `CREATE DATABASE qaute COLLATE Vietnamese_100_CI_AS;` (ddl-auto=update tự tạo bảng).
-3. Đổi màu giao diện ở `static/css/qaute.css` (biến `--ute-blue`, `--ute-accent`). Đặt logo vào `static/img/logo.png`.
-4. Entity `[SHARED]` (User, Department, Question, Answer): khi merge giữ bản của Người 1/2, chỉ cần còn các field:
-   - User: role (USER/ADMIN/MANAGER), enabled, managedDepartments
-   - Question: title, content, asker, department, status, publicVisible, createdAt
-   - Answer: question, advisor, content, needApproval, approvalStatus, published, createdAt
-5. Người 1 cung cấp: `@EnableMethodSecurity`, bean `PasswordEncoder`, `Principal.getName()` = email,
-   authority `ROLE_ADMIN` / `ROLE_MANAGER`, Principal WebSocket = email.
-6. Người 2 gọi:
-   - `ActivityLogService.log(email, role, action, target)` cho mọi hành động
-   - Khi bật "xin duyệt": `needApproval=true, approvalStatus=PENDING, published=false`
-   - Khi chuyển câu hỏi sang khoa khác: câu cũ `status=LOCKED`
-   - Kiểm tra `AdvisorProfile.status == ACTIVE` trước khi cho quyền tư vấn
+Ứng dụng Spring Boot dùng Thymeleaf, Bootstrap, Spring Data JPA, SQL Server, JWT, WebSocket và Cloudinary.
 
-## Route
-Admin:   /admin/dashboard, /admin/questions(/{id}), /admin/advisors(/new|/{id}/edit), /admin/managers, /admin/logs
-Manager: /manager/dashboard, /manager/questions(/{id}), /manager/reviews(/{id}), /manager/heads
-Chung:   /report/export (xlsx), /report/print (in / lưu PDF)
+## Một bộ câu hỏi và trả lời
 
-## Kiểm tra / bảo đảm (đối chiếu yêu cầu)
-| Yêu cầu | Cách đảm bảo | Test |
-|---|---|---|
-| Admin xem câu hỏi chưa/đã trả lời + người hỏi + thời gian | /admin/questions: 3 tab kèm số lượng, cột ngày giờ, tên + email người hỏi | (thủ công) |
-| Từ chối lưu lý do + đề xuất; thông báo kèm lý do | AnswerReview.reason/betterAnswer; Notification (NVARCHAR(MAX)) + WebSocket chứa cả lý do và đề xuất | ReviewServiceTest |
-| Trưởng chuyên viên đúng khoa, không vượt quyền | AdvisorService.toggleHead(…, allowedDepts) -> 403; Manager chưa gán khoa = không có quyền | AdvisorServiceTest |
-| Đánh giá lưu & truy xuất | AnswerReview.rating + reason(nhận xét); 1 Manager = 1 đánh giá/câu (chấm lại = cập nhật); dashboard, Excel, trang in PDF | ReviewServiceTest |
-| Gỡ tư vấn viên giữ lịch sử | Xoá mềm (deleted/deletedAt/deletedBy), không xoá User/Question/Answer/Log; thêm lại = khôi phục | AdvisorServiceTest |
-| Phân quyền URL | SecurityConfig + @PreAuthorize + kiểm tra khoa ở service; CSRF bật | AccessControlTest |
+Toàn bộ luồng tạo, xem, trả lời, duyệt, đánh giá và thống kê hiện dùng hai entity `vn.iotstar.model.Question` và `vn.iotstar.model.Answer`, ánh xạ lần lượt vào `dbo.questions` và `dbo.answers`. Các repository dùng chung là `QuestionRepository` và `AnswerRepository`.
 
-Người 1/2 dùng cho trang công khai: QuestionRepository.findByPublicVisibleTrueOrderByCreatedAtDesc()
-và AnswerRepository.findByQuestionIdAndPublishedTrueOrderByCreatedAtAsc() (không lộ câu chờ duyệt / bị từ chối).
-Kiểm tra quyền tư vấn viên: AdvisorService.isActiveAdvisor(userId).
+## Nâng cấp database SQL Server đã có dữ liệu
+
+Sao lưu database trước và dừng ứng dụng cũ. Nếu database còn `dbo.user_accounts`, chạy [merge-user-accounts.sql](src/main/resources/db/manual/merge-user-accounts.sql) trước để chuyển tài khoản và các liên kết sang `dbo.users`. Sau đó chạy một lần [merge-question-answer-tables.sql](src/main/resources/db/manual/merge-question-answer-tables.sql) trên database `QAUTE`. Script nhập câu hỏi/trả lời từ `qaute_questions` và `qaute_answers`, cập nhật liên kết lịch sử duyệt, rồi xóa hai bảng cũ trong cùng transaction. Nếu các bảng legacy tương ứng không còn tồn tại, bỏ qua migration đó. Cuối cùng chạy [repair-question-user-foreign-keys.sql](src/main/resources/db/manual/repair-question-user-foreign-keys.sql) để xác nhận liên kết câu hỏi, câu trả lời và lịch sử chuyển khoa đều trỏ tới `dbo.users`; script sẽ dừng nếu phát hiện dữ liệu mồ côi.
+
+Hibernate `ddl-auto=update` không tự gộp dữ liệu hoặc xóa các bảng cũ; cần chạy migration trước khi dùng bản ứng dụng này với database hiện tại.
+
+Để cấu hình bộ tài khoản local hiện có cho kiểm thử, chạy [configure-local-test-accounts.sql](src/main/resources/db/manual/configure-local-test-accounts.sql) trên `QAUTE`. Script đặt mật khẩu ứng dụng thành `123456` bằng BCrypt, phân công ba consultant vào khoa/chuyên đề tương ứng, sửa khoa còn thiếu của câu hỏi cũ và gán manager phạm vi các khoa có dữ liệu kiểm thử.
+
+## Cấu hình chạy
+
+- Java 21 và SQL Server; cấu hình kết nối bằng `DB_USERNAME` và `DB_PASSWORD`.
+- Cấu hình mặc định kết nối database `QAUTE`; bộ kiểm thử kết nối SQL Server database `QAUTE_TEST`, có thể đổi bằng `DB_TEST_URL`, `DB_TEST_USERNAME` và `DB_TEST_PASSWORD`.
+- Đặt `JWT_SECRET` riêng cho môi trường chạy.
+- Đặt `BOOTSTRAP_ADMIN_EMAIL` và `BOOTSTRAP_ADMIN_PASSWORD` để tạo admin ban đầu nếu database chưa có admin.
+- Đặt `CLOUDINARY_URL` để bật upload tệp đính kèm.
+- Cấu hình `MAIL_USERNAME` và `MAIL_PASSWORD` nếu cần gửi email.
+
+Chạy ứng dụng bằng `mvn spring-boot:run`.

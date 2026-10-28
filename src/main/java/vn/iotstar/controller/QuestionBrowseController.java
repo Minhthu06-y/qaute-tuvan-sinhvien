@@ -20,6 +20,7 @@ import java.util.Set;
 public class QuestionBrowseController {
     private final QuestionBrowseService service;
     private final DepartmentRepository departments;
+    private final ScopeService scope;
 
     @GetMapping("/admin/questions")
     @PreAuthorize("hasRole('ADMIN')")
@@ -35,8 +36,8 @@ public class QuestionBrowseController {
     public String managerList(@RequestParam(defaultValue = "UNANSWERED") QuestionStatus status,
                               @RequestParam(required = false) Long deptId, @RequestParam(required = false) String category,
                               @RequestParam(required = false) String kw,
-                              @RequestParam(defaultValue = "0") int page, Model m) {
-        return list("/manager", null, status, deptId, category, kw, page, m);
+                              @RequestParam(defaultValue = "0") int page, Principal principal, Model m) {
+        return list("/manager", scope.managerDepartments(principal.getName()), status, deptId, category, kw, page, m);
     }
 
     @GetMapping("/admin/questions/{id}")
@@ -45,8 +46,8 @@ public class QuestionBrowseController {
 
     @GetMapping("/manager/questions/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public String managerDetail(@PathVariable Long id, Model m) {
-        return detail("/manager", null, id, m);
+    public String managerDetail(@PathVariable Long id, Principal principal, Model m) {
+        return detail("/manager", scope.managerDepartments(principal.getName()), id, m);
     }
 
     @PostMapping("/manager/questions/{id}/answers")
@@ -56,7 +57,7 @@ public class QuestionBrowseController {
             ra.addFlashAttribute("err", "Nội dung trả lời không được để trống");
             return "redirect:/manager/questions/" + id;
         }
-        service.answer(id, content, p.getName());
+        service.answer(id, content, p.getName(), scope.managerDepartments(p.getName()));
         ra.addFlashAttribute("msg", "Đã gửi câu trả lời cho sinh viên");
         return "redirect:/manager/questions/" + id;
     }

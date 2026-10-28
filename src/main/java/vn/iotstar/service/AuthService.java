@@ -14,13 +14,11 @@ import vn.iotstar.entity.User;
 import vn.iotstar.enums.Role;
 import vn.iotstar.enums.UserStatus;
 import vn.iotstar.repository.UserRepository;
-import vn.iotstar.repository.UserAccountRepository;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserAccountRepository legacyUsers;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final DeletedAccountEmailService deletedAccountEmails;
@@ -30,13 +28,11 @@ public class AuthService {
 
     public AuthService(
             UserRepository userRepository,
-            UserAccountRepository legacyUsers,
             PasswordEncoder passwordEncoder,
             OtpService otpService,
             DeletedAccountEmailService deletedAccountEmails) {
 
         this.userRepository = userRepository;
-        this.legacyUsers = legacyUsers;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
         this.deletedAccountEmails = deletedAccountEmails;
@@ -103,8 +99,7 @@ public class AuthService {
         }
 
         // Không cho đăng ký trùng email ở cả hai bảng tài khoản.
-        if (userRepository.existsByEmailIgnoreCase(email)
-                || legacyUsers.existsByEmailIgnoreCase(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException(
                     "Email đã được đăng ký.");
         }

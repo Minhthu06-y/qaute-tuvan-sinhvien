@@ -10,7 +10,11 @@ import vn.iotstar.enums.*;
 
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+
     Optional<User> findByEmailIgnoreCase(String email);
+
+    Optional<User> findByDeletedEmailIgnoreCase(String deletedEmail);
 
     boolean existsByEmailIgnoreCase(String email);
 

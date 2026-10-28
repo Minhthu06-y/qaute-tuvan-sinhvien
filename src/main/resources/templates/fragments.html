@@ -9,6 +9,7 @@
   <link rel="stylesheet" th:href="@{/css/theme.css}">
   <link rel="stylesheet" th:href="@{/css/account.css}">
   <link rel="stylesheet" th:href="@{/css/topic-select.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
 <header th:fragment="topbar" class="topbar">
@@ -17,7 +18,7 @@
   <div class="topbar-title"><span class="d-block d-sm-none">QAUTE • Tư vấn sinh viên</span><span class="d-none d-sm-block">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span><small>HỆ THỐNG TƯ VẤN SINH VIÊN</small></div>
   <div class="topbar-actions">
     <span class="connection-pill"><span class="connection-dot"></span> Trực tuyến</span>
-    <a class="icon-action" th:href="@{/manager/approvals}" title="Thông báo"><i class="bi bi-bell"></i><span class="notification-dot"></span></a>
+    <a th:if="${isManager}" class="icon-action" th:href="@{/manager/approvals}" title="Thông báo"><i class="bi bi-bell"></i><span class="notification-dot"></span></a>
     <a class="user-chip text-white text-decoration-none" th:href="@{/account}" title="Xem thông tin tài khoản"><span class="avatar" th:text="${#strings.substring(currentUser.displayName,0,1)}">N</span><span class="user-chip-name" th:text="${currentUser.displayName}">Người dùng</span></a>
   </div>
 </header>
@@ -28,31 +29,27 @@
     <div class="school-name">HCMUTE <span>QAUTE • NHÓM 4</span></div>
     <div class="identity-line"></div>
     <strong th:text="${currentUser.displayName}">Nguyễn Minh Thư</strong>
-    <small th:text="${currentUser.title}">Tư vấn viên</small>
+    <small th:text="${currentRoleLabel}">Tư vấn viên</small>
     <small th:if="${currentUser.faculty != null}" th:text="${currentUser.faculty.name}">Khoa Công Nghệ Thông Tin</small>
   </div>
   <nav class="side-nav">
-    <div class="nav-section-label">TƯ VẤN SINH VIÊN</div>
-    <a class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/questions}"><i class="bi bi-inbox"></i><span>Hộp câu hỏi</span><span class="nav-arrow">›</span></a>
+    <div class="nav-section-label" th:text="${isAdmin ? 'QUẢN TRỊ HỆ THỐNG' : (isManager ? 'QUẢN LÝ KHOA' : 'TƯ VẤN SINH VIÊN')}">TƯ VẤN SINH VIÊN</div>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'dashboard' ? 'active' : ''}" th:href="@{/admin/dashboard}"><i class="bi bi-grid-1x2"></i><span>Tổng quan</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/admin/student-questions}"><i class="bi bi-chat-left-text"></i><span>Quản lý câu hỏi</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'accounts' ? 'active' : ''}" th:href="@{/admin/accounts}"><i class="bi bi-person-vcard"></i><span>Quản lý tài khoản</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'advisors' ? 'active' : ''}" th:href="@{/admin/advisors}"><i class="bi bi-person-lines-fill"></i><span>Tư vấn viên</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'managers' ? 'active' : ''}" th:href="@{/admin/managers}"><i class="bi bi-people"></i><span>Quản lý khoa</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'logs' ? 'active' : ''}" th:href="@{/admin/logs}"><i class="bi bi-clock-history"></i><span>Nhật ký hoạt động</span></a>
+    <a th:if="${isManager}" class="side-link" th:classappend="${active == 'dashboard' ? 'active' : ''}" th:href="@{/manager/dashboard}"><i class="bi bi-grid-1x2"></i><span>Tổng quan</span></a>
+    <a th:if="${isManager}" class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/manager/questions}"><i class="bi bi-chat-left-text"></i><span>Tất cả câu hỏi</span></a>
+    <a th:if="${isManager}" class="side-link" th:classappend="${active == 'reviews' ? 'active' : ''}" th:href="@{/manager/reviews}"><i class="bi bi-check2-square"></i><span>Duyệt câu trả lời</span></a>
+    <a th:if="${isManager}" class="side-link" th:classappend="${active == 'heads' ? 'active' : ''}" th:href="@{/manager/heads}"><i class="bi bi-people"></i><span>Đầu mối tư vấn</span></a>
+    <a th:if="${isAdmin || isManager}" class="side-link" th:href="@{/report/export(period='week')}"><i class="bi bi-file-earmark-arrow-down"></i><span>Tải báo cáo Excel</span></a>
+    <a th:if="${!isAdmin && !isManager}" class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/questions}"><i class="bi bi-inbox"></i><span>Hộp câu hỏi</span><span class="nav-arrow">›</span></a>
     <a class="side-link" th:if="${isStudent}" th:classappend="${active == 'new' ? 'active' : ''}" th:href="@{/questions/new}"><i class="bi bi-plus-circle"></i><span>Gửi câu hỏi</span></a>
-    <a class="side-link" th:classappend="${active == 'public' ? 'active' : ''}" th:href="@{/questions/public}"><i class="bi bi-megaphone"></i><span>Câu hỏi công khai</span></a>
-    <a class="side-link" th:if="${isManager}" th:classappend="${active == 'approvals' ? 'active' : ''}" th:href="@{/manager/approvals}"><i class="bi bi-check2-square"></i><span>Chờ trưởng ban cố vấn duyệt</span></a>
-    <div class="nav-section-label nav-label-spaced">KHOA & TÀI KHOẢN</div>
-    <a th:if="${isStudent}" class="side-link" href="#departments"><i class="bi bi-diagram-3"></i><span>Đội ngũ theo khoa</span></a>
-    <a class="side-link" href="#demo-role"><i class="bi bi-person-gear"></i><span>Đổi vai trò demo</span></a>
-    <div class="demo-card" id="demo-role">
-      <span class="demo-label"><i class="bi bi-stars"></i> CHẾ ĐỘ MÔ PHỎNG</span>
-      <div class="d-grid gap-2 mt-2">
-        <a th:href="@{/demo/switch(role='student')}" class="btn btn-demo" th:classappend="${isStudent ? 'selected' : ''}"><i class="bi bi-mortarboard"></i> Sinh viên</a>
-        <a th:href="@{/demo/switch(role='advisor')}" class="btn btn-demo" th:classappend="${activeRole == 'ADVISOR' ? 'selected' : ''}"><i class="bi bi-chat-square-text"></i> Tư vấn viên</a>
-        <a th:href="@{/demo/switch(role='lecturer')}" class="btn btn-demo" th:classappend="${activeRole == 'LECTURER' ? 'selected' : ''}"><i class="bi bi-person-video3"></i> Giảng viên</a>
-        <a th:href="@{/demo/switch(role='staff')}" class="btn btn-demo" th:classappend="${activeRole == 'STAFF' ? 'selected' : ''}"><i class="bi bi-person-badge"></i> Cán bộ viên chức</a>
-        <a th:href="@{/demo/switch(role='manager')}" class="btn btn-demo" th:classappend="${isManager ? 'selected' : ''}"><i class="bi bi-person-check"></i> Trưởng ban cố vấn</a>
-      </div>
-      <p class="demo-hint">Mật khẩu demo: <code>123456</code></p>
-    </div>
-    <a class="side-link" th:href="@{/login}"><i class="bi bi-box-arrow-in-right"></i><span>Đăng nhập tài khoản</span></a>
-    <a class="side-link" th:href="@{/register}"><i class="bi bi-person-add"></i><span>Đăng ký sinh viên</span></a>
+    <a class="side-link" th:if="${!isAdmin && !isManager}" th:classappend="${active == 'public' ? 'active' : ''}" th:href="@{/questions/public}"><i class="bi bi-megaphone"></i><span>Câu hỏi công khai</span></a>
+    <a th:if="${isStudent}" class="side-link" href="/questions#departments"><i class="bi bi-diagram-3"></i><span>Đội ngũ theo khoa</span></a>
+    <div class="nav-section-label nav-label-spaced">TÀI KHOẢN</div>
     <a class="side-link" th:classappend="${active == 'account' ? 'active' : ''}" th:href="@{/account}"><i class="bi bi-person-vcard"></i><span>Thông tin tài khoản</span></a>
     <form th:action="@{/logout}" method="post" class="side-logout"><button class="side-link border-0 bg-transparent w-100 text-start"><i class="bi bi-box-arrow-left"></i><span>Đăng xuất</span></button></form>
   </nav>
@@ -70,7 +67,7 @@
   <div class="footer-school">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</div>
 </footer>
 
-<div th:fragment="scripts" th:attr="data-user-id=${notificationUserId},data-faculty-id=${currentUser.faculty != null ? currentUser.faculty.id : ''},data-active-role=${activeRole}" id="app-scripts">
+<div th:fragment="scripts" th:attr="data-user-id=${notificationUserId},data-faculty-id=${currentUser.faculty != null ? currentUser.faculty.id : ''},data-role=${currentRole}" id="app-scripts">
   <div id="live-toast" class="live-toast" role="status"><i class="bi bi-bell-fill"></i><span id="live-toast-message"></span><a id="live-toast-link" href="#">Xem</a></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

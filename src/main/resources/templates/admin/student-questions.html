@@ -41,7 +41,7 @@
               <td><span class="admin-primary-text" th:text="${question.asker.displayName}">Sinh viên</span><small class="admin-secondary-text" th:text="${question.asker.email}">email@example.edu.vn</small></td>
               <td><span th:text="${question.faculty.name}">Khoa</span><small class="admin-secondary-text" th:if="${question.topic != null}" th:text="${question.topic.name}">Chuyên đề</small></td>
               <td th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</td>
-              <td><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></td>
+              <td><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></td>
               <td><a class="admin-icon-button" th:href="@{/admin/student-questions/{id}(id=${question.id})}" title="Xem chi tiết"><i class="bi bi-arrow-up-right"></i></a></td>
             </tr>
             <tr th:if="${page.empty}"><td colspan="6" class="admin-empty"><i class="bi bi-chat-square"></i>Chưa có câu hỏi phù hợp bộ lọc.</td></tr>

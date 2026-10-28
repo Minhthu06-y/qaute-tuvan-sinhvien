@@ -44,7 +44,7 @@ public class AdminStudentQuestionController {
         QuestionStatus selectedStatus = parseStatus(status);
         String search = kw == null ? "" : kw.trim().toLowerCase(Locale.ROOT);
         List<Question> filtered = questions.findAll().stream()
-                .filter(question -> selectedStatus == null || question.getStatus() == selectedStatus)
+                .filter(question -> selectedStatus == null || matchesStatus(question.getStatus(), selectedStatus))
                 .filter(question -> facultyId == null || (question.getFaculty() != null && question.getFaculty().getId().equals(facultyId)))
                 .filter(question -> search.isEmpty() || matches(question, search))
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
@@ -58,7 +58,8 @@ public class AdminStudentQuestionController {
         model.addAttribute("status", selectedStatus == null ? "ALL" : selectedStatus.name());
         model.addAttribute("facultyId", facultyId);
         model.addAttribute("kw", kw);
-        model.addAttribute("openCount", questions.findAll().stream().filter(q -> q.getStatus() == QuestionStatus.OPEN).count());
+        model.addAttribute("openCount", questions.findAll().stream().filter(q -> q.getStatus() == QuestionStatus.OPEN
+                || q.getStatus() == QuestionStatus.UNANSWERED).count());
         model.addAttribute("answeredCount", questions.findAll().stream().filter(q -> q.getStatus() == QuestionStatus.ANSWERED).count());
         model.addAttribute("totalCount", questions.count());
         return "admin/student-questions";
@@ -80,6 +81,12 @@ public class AdminStudentQuestionController {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    private boolean matchesStatus(QuestionStatus actual, QuestionStatus selected) {
+        if (selected == QuestionStatus.OPEN || selected == QuestionStatus.UNANSWERED)
+            return actual == QuestionStatus.OPEN || actual == QuestionStatus.UNANSWERED;
+        return actual == selected;
     }
 
     private boolean matches(Question question, String search) {

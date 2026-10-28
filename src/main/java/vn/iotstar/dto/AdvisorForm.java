@@ -4,6 +4,8 @@ import vn.iotstar.enums.*;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class AdvisorForm {
@@ -23,6 +25,7 @@ public class AdvisorForm {
     private AudienceType audience;
     @NotNull(message = "Vui lòng chọn trạng thái")
     private AdvisorStatus status;
+    private Set<Long> topicIds = new HashSet<>();
     private boolean head;
 }
 

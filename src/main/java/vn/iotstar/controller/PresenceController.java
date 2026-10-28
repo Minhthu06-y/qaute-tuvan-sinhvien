@@ -19,7 +19,8 @@ public class PresenceController {
 
     @PostMapping("/presence/heartbeat")
     public ResponseEntity<Void> heartbeat(HttpSession session) {
-        if (session.getAttribute("userId") != null && sessionContext.viewer(session).isAdvisor()) {
+        SessionContext.Viewer viewer = sessionContext.viewer(session);
+        if (session.getAttribute("userId") != null && viewer != null && viewer.isAdvisor()) {
             presence.heartbeat((Long) session.getAttribute("userId"), session.getId());
         }
         return ResponseEntity.noContent().build();

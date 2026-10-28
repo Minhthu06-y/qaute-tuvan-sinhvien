@@ -19,11 +19,11 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(bytes); this.expirationMs = expirationMs;
     }
 
-    public String issue(String email, String roles) {
+    public String issue(String email, String role) {
         long now = System.currentTimeMillis();
-        return Jwts.builder().subject(email).claim("roles", roles).issuedAt(new Date(now))
+        return Jwts.builder().subject(email).claim("role", role).issuedAt(new Date(now))
                 .expiration(new Date(now + expirationMs)).signWith(key).compact();
     }
     public String subject(String token) { return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject(); }
-    public String roles(String token) { return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("roles", String.class); }
+    public String role(String token) { return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role", String.class); }
 }

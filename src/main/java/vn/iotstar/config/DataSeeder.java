@@ -5,11 +5,12 @@ import vn.iotstar.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import vn.iotstar.enums.*;
 
-/** Chỉ để chạy thử. Admin mặc định: admin@qaute.local / Admin@123 (ĐỔI trước khi nộp). */
+/** Seeds legacy department data and creates an admin only when credentials are supplied by configuration. */
 @Component
 @RequiredArgsConstructor
 @Order(1)
@@ -17,6 +18,12 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository users;
     private final DepartmentRepository departments;
     private final PasswordEncoder encoder;
+
+    @Value("${app.bootstrap.admin.email:}")
+    private String adminEmail;
+
+    @Value("${app.bootstrap.admin.password:}")
+    private String adminPassword;
 
     @Override public void run(String... args) {
         if (departments.count() == 0)
@@ -27,10 +34,11 @@ public class DataSeeder implements CommandLineRunner {
                     "Phòng Tuyển sinh và Công Tác Sinh Viên - Chế độ chính sách", "Đoàn Thanh niên - Hội sinh viên",
                     "Khoa Khoa Học Ứng Dụng", "Viện Sư Phạm Kỹ Thuật", "Khoa Đào tạo Quốc Tế"})
                 departments.save(new Department(n));
-        if (!users.existsByEmailIgnoreCase("admin@qaute.local")) {
+        if (adminEmail != null && !adminEmail.isBlank() && adminPassword != null && !adminPassword.isBlank()
+                && !users.existsByEmailIgnoreCase(adminEmail.trim())) {
             User a = new User();
-            a.setEmail("admin@qaute.local"); a.setFullName("Quản trị viên");
-            a.setPasswordHash(encoder.encode("Admin@123")); a.setRole(Role.ADMIN);
+            a.setEmail(adminEmail.trim().toLowerCase(java.util.Locale.ROOT)); a.setFullName("Quản trị viên");
+            a.setPasswordHash(encoder.encode(adminPassword)); a.setRole(Role.ADMIN);
             a.setStatus(UserStatus.ACTIVE); a.setEnabled(true);
             users.save(a);
         }

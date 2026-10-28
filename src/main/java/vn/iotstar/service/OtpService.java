@@ -2,6 +2,7 @@ package vn.iotstar.service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -35,7 +36,30 @@ public class OtpService {
 
     @Transactional
     public void sendOtp(String email) {
+        sendOtp(email, "Xác minh tài khoản QAUTE", code ->
+                "Mã OTP của bạn là: " + code
+                + "\nMã có hiệu lực trong 5 phút."
+                + "\nNếu bạn không thực hiện đăng ký, hãy bỏ qua email này.");
+    }
+
+    @Transactional
+    public void sendPasswordResetOtp(String email) {
+        sendOtp(email, "Đặt lại mật khẩu QAUTE", code ->
+                "Mã OTP để đặt lại mật khẩu QAUTE của bạn là: " + code
+                + "\nMã có hiệu lực trong 5 phút."
+                + "\nNếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.");
+    }
+
+    private void sendOtp(String email, String subject, Function<String, String> messageText) {
         String normalizedEmail = email.trim().toLowerCase();
+        LocalDateTime now = LocalDateTime.now();
+
+        otpRepository.findTopByEmailOrderByIdDesc(normalizedEmail).ifPresent(latestOtp -> {
+            LocalDateTime issuedAt = latestOtp.getExpiresAt().minusMinutes(5);
+            if (issuedAt.plusSeconds(60).isAfter(now)) {
+                throw new IllegalStateException("Vui lòng chờ một phút trước khi gửi lại mã OTP.");
+            }
+        });
 
         // Vô hiệu hóa các OTP cũ chưa sử dụng.
         otpRepository
@@ -52,7 +76,7 @@ public class OtpService {
         EmailOtp otp = new EmailOtp();
         otp.setEmail(normalizedEmail);
         otp.setOtpHash(passwordEncoder.encode(code));
-        otp.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        otp.setExpiresAt(now.plusMinutes(5));
         otp.setUsed(false);
 
         otpRepository.save(otp);
@@ -60,21 +84,15 @@ public class OtpService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(senderEmail);
         message.setTo(normalizedEmail);
-        message.setSubject("Xác minh tài khoản QAUTE");
-        message.setText(
-            "Mã OTP của bạn là: " + code
-            + "\nMã có hiệu lực trong 5 phút."
-            + "\nNếu bạn không thực hiện đăng ký, hãy bỏ qua email này."
-        );
+        message.setSubject(subject);
+        message.setText(messageText.apply(code));
 
         try {
             mailSender.send(message);
         } catch (RuntimeException ex) {
             otp.setUsed(true);
             otpRepository.save(otp);
-            throw new IllegalStateException(
-                "Không thể gửi OTP. Vui lòng thử lại sau."
-            );
+            throw new IllegalStateException("Không thể gửi mã xác minh. Vui lòng thử lại sau.");
         }
     }
 
@@ -96,7 +114,17 @@ public class OtpService {
             return false;
         }
 
+        if (otp.getAttempts() >= 5) {
+            otp.setUsed(true);
+            otpRepository.save(otp);
+            return false;
+        }
+
         if (!passwordEncoder.matches(code, otp.getOtpHash())) {
+            int attempts = otp.getAttempts() + 1;
+            otp.setAttempts(attempts);
+            if (attempts >= 5) otp.setUsed(true);
+            otpRepository.save(otp);
             return false;
         }
 

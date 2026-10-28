@@ -38,7 +38,7 @@ public class AdminAdvisorController {
     public String newForm(Model m) {
         AdvisorForm f = new AdvisorForm();
         f.setStatus(AdvisorStatus.ACTIVE);
-        f.setAdvisorType(AdvisorType.STUDENT);
+        f.setAdvisorType(AdvisorType.ADVISOR);
         return form(m, f, null);
     }
 
@@ -63,7 +63,9 @@ public class AdminAdvisorController {
         AdvisorForm f = new AdvisorForm();
         f.setFullName(a.getUser().getFullName()); f.setEmail(a.getUser().getEmail());
         f.setPhone(a.getUser().getPhone()); f.setDepartmentId(a.getDepartment().getId());
-        f.setAdvisorType(a.getAdvisorType() == null ? AdvisorType.STUDENT : a.getAdvisorType());
+        f.setTopicIds(a.getUser().getAssignedTopics().stream().map(topic -> topic.getId())
+                .collect(java.util.stream.Collectors.toSet()));
+        f.setAdvisorType(a.getAdvisorType() == null ? AdvisorType.ADVISOR : a.getAdvisorType());
         f.setAudience(a.getAudience());
         f.setStatus(a.getStatus()); f.setHead(a.isHead());
         return form(m, f, id);
@@ -103,6 +105,7 @@ public class AdminAdvisorController {
     private String form(Model m, AdvisorForm f, Long editId) {
         m.addAttribute("form", f); m.addAttribute("editId", editId);
         m.addAttribute("departments", departments.findAll());
+        m.addAttribute("topics", service.topicCatalog());
         m.addAttribute("audiences", AudienceType.values());
         m.addAttribute("advisorTypes", AdvisorType.values());
         m.addAttribute("statuses", AdvisorStatus.values());

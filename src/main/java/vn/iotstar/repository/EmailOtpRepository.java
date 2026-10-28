@@ -12,4 +12,6 @@ public interface EmailOtpRepository
 
     Optional<EmailOtp> findTopByEmailAndUsedFalseOrderByIdDesc(
             String email);
+
+    Optional<EmailOtp> findTopByEmailOrderByIdDesc(String email);
 }

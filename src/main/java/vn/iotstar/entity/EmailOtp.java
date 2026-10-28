@@ -25,6 +25,9 @@ public class EmailOtp {
     @Column(nullable = false)
     private boolean used = false;
 
+    @Column
+    private Integer attempts = 0;
+
     public EmailOtp() {
     }
 
@@ -62,5 +65,13 @@ public class EmailOtp {
 
     public void setUsed(boolean used) {
         this.used = used;
+    }
+
+    public int getAttempts() {
+        return attempts == null ? 0 : attempts;
+    }
+
+    public void setAttempts(Integer attempts) {
+        this.attempts = attempts;
     }
 }

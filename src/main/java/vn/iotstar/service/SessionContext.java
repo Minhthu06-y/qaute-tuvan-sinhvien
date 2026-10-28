@@ -1,53 +1,48 @@
 package vn.iotstar.service;
 
 import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import vn.iotstar.enums.AccountRole;
-import vn.iotstar.model.UserAccount;
-import vn.iotstar.repository.UserAccountRepository;
+import vn.iotstar.entity.User;
+import vn.iotstar.enums.AdvisorStatus;
+import vn.iotstar.enums.Role;
+import vn.iotstar.repository.AdvisorProfileRepository;
+import vn.iotstar.repository.UserRepository;
 
 @Service
 public class SessionContext {
-    private final UserAccountRepository users;
-    public SessionContext(UserAccountRepository users) { this.users = users; }
+    private final UserRepository users;
+    private final AdvisorProfileRepository advisors;
+
+    public SessionContext(UserRepository users, AdvisorProfileRepository advisors) {
+        this.users = users;
+        this.advisors = advisors;
+    }
 
     public Viewer viewer(HttpSession session) {
-        Long id = (Long) session.getAttribute("userId");
-        UserAccount user = id == null ? users.findByEmail("tuvanvien@qaute.edu.vn").orElseThrow() : users.findById(id).orElseGet(() -> users.findByEmail("tuvanvien@qaute.edu.vn").orElseThrow());
-        String active = (String) session.getAttribute("activeRole");
-        AccountRole role;
-        try { role = active == null ? defaultRole(user) : AccountRole.valueOf(active); }
-        catch (IllegalArgumentException ex) { role = defaultRole(user); }
-        if (!user.hasRole(role)) role = defaultRole(user);
-        return new Viewer(user, role);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<User> authenticatedUser = Optional.empty();
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+            authenticatedUser = users.findByEmailIgnoreCase(authentication.getName());
+        }
+        User user = authenticatedUser.orElse(null);
+        if (user == null || !user.isEnabled() || user.getStatus() != vn.iotstar.enums.UserStatus.ACTIVE) return null;
+        boolean activeAdvisor = user.getRole() == Role.CONSULTANT
+                && advisors.existsByUserIdAndStatusAndDeletedFalse(user.getId(), AdvisorStatus.ACTIVE);
+        return new Viewer(user, user.getRole(), activeAdvisor);
     }
-    public void login(HttpSession session, UserAccount user) {
+
+    public void login(HttpSession session, User user) {
         session.setAttribute("userId", user.getId());
-        session.setAttribute("activeRole", defaultRole(user).name());
     }
-    public void switchDemo(HttpSession session, AccountRole role) {
-        String email = switch (role) {
-            case STUDENT -> "sinhvien@qaute.edu.vn";
-            case ADVISOR -> "tuvanvien@qaute.edu.vn";
-            case LECTURER -> "giangvien@qaute.edu.vn";
-            case STAFF -> "canbo@qaute.edu.vn";
-            case MANAGER -> "manager@qaute.edu.vn";
-        };
-        UserAccount user = users.findByEmail(email).orElseThrow();
-        session.setAttribute("userId", user.getId()); session.setAttribute("activeRole", role.name());
-    }
-    public void switchRole(HttpSession session, AccountRole role) { session.setAttribute("activeRole", role.name()); }
-    private AccountRole defaultRole(UserAccount user) {
-        if (user.hasRole(AccountRole.MANAGER)) return AccountRole.MANAGER;
-        if (user.hasRole(AccountRole.ADVISOR)) return AccountRole.ADVISOR;
-        if (user.hasRole(AccountRole.LECTURER)) return AccountRole.LECTURER;
-        if (user.hasRole(AccountRole.STAFF)) return AccountRole.STAFF;
-        return AccountRole.STUDENT;
-    }
-    public record Viewer(UserAccount user, AccountRole role) {
-        public boolean isStudent() { return role == AccountRole.STUDENT; }
-        public boolean isAdvisor() { return role == AccountRole.ADVISOR || role == AccountRole.LECTURER || role == AccountRole.STAFF; }
-        public boolean isManager() { return role == AccountRole.MANAGER; }
+
+    public record Viewer(User user, Role role, boolean activeAdvisor) {
+        public boolean isStudent() { return role == Role.USER; }
+        public boolean isAdvisor() { return role == Role.CONSULTANT && activeAdvisor; }
+        public boolean isManager() { return role == Role.MANAGER; }
     }
 }

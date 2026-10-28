@@ -81,6 +81,62 @@ body, button, input, select, textarea {
   background-color: #38bdf8; /* Màu xanh dương tương ứng cột câu hỏi */
 }
 
+/* Admin pages share the same authenticated header, sidebar and canvas as user pages. */
+body.admin-body {
+  margin: 0;
+  background: var(--canvas, #f2f7fa);
+  color: var(--ink, #24435b);
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
+}
+
+.admin-shell {
+  min-height: 100vh;
+}
+
+.admin-main {
+  min-height: 100vh;
+  margin-left: 258px;
+}
+
+.admin-content {
+  width: 100%;
+  max-width: 1600px;
+  padding: 97px 30px 38px;
+}
+
+.admin-page-heading {
+  border-bottom: 1px solid #d4dfe7;
+  padding: 0 0 17px;
+  margin-bottom: 22px;
+}
+
+.admin-card,
+.admin-stat,
+.admin-toolbar {
+  border-radius: 11px;
+  box-shadow: 0 5px 18px #1a46610b;
+}
+
+.admin-table th {
+  background: #f7fafc;
+}
+
+@media (max-width: 991.98px) {
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 97px 18px 30px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .admin-content {
+    padding: 88px 12px 24px;
+  }
+}
+
 .admin-chart-tooltip .tooltip-row.a .dot {
   background-color: #34d399; /* Màu xanh lá tương ứng cột câu trả lời */
 }

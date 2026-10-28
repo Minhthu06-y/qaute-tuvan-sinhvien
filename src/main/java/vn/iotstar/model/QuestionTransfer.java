@@ -1,6 +1,7 @@
 package vn.iotstar.model;
 
 import java.time.LocalDateTime;
+import vn.iotstar.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -23,13 +24,13 @@ public class QuestionTransfer {
     @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "to_faculty_id")
     private Faculty toFaculty;
     @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "transferred_by_id")
-    private UserAccount transferredBy;
+    private User transferredBy;
     private LocalDateTime createdAt;
     @Column(length = 1200)
     private String reason;
 
     protected QuestionTransfer() {}
-    public QuestionTransfer(Question question, Faculty fromFaculty, Faculty toFaculty, UserAccount transferredBy, String reason, LocalDateTime createdAt) {
+    public QuestionTransfer(Question question, Faculty fromFaculty, Faculty toFaculty, User transferredBy, String reason, LocalDateTime createdAt) {
         this.question = question; this.fromFaculty = fromFaculty; this.toFaculty = toFaculty; this.transferredBy = transferredBy; this.reason = reason; this.createdAt = createdAt;
     }
 }

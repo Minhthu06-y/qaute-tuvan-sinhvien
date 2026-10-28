@@ -1,4 +1,4 @@
-/* Keep the navigation readable when Bootstrap's responsive offcanvas is active. */
+/* Keep the shared navigation readable while Bootstrap's offcanvas is open. */
 .side-panel.offcanvas-lg {
   background-color: #075487 !important;
   color: #fff !important;
@@ -18,25 +18,4 @@
 .side-panel .side-link.active {
   background-color: #ffffff20 !important;
   color: #fff !important;
-}
-
-.side-panel .demo-card {
-  background-color: #06466f !important;
-  border-color: #ffffff38;
-}
-
-.side-panel .btn-demo {
-  color: #e8f5fc !important;
-  border-color: #ffffff50 !important;
-}
-
-.side-panel .btn-demo:hover,
-.side-panel .btn-demo.selected {
-  background-color: #1680b9 !important;
-  border-color: #b4e2f8 !important;
-  color: #fff !important;
-}
-
-.side-panel .demo-hint {
-  color: #c5e0ef !important;
 }

@@ -1,6 +1,7 @@
 package vn.iotstar.entity;
 import jakarta.persistence.*;
 import vn.iotstar.enums.*;
+import vn.iotstar.model.Answer;
 
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
