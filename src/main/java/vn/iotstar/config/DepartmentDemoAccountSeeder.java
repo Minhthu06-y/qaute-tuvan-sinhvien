@@ -45,6 +45,10 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
             "canbo@qaute.edu.vn", 80,
             "giangvien@qaute.edu.vn", 81,
             "tuvanvien@qaute.edu.vn", 82);
+    private static final Map<String, AdvisorType> LOCAL_TEST_ACCOUNT_TITLES = Map.of(
+            "canbo@qaute.edu.vn", AdvisorType.STAFF,
+            "giangvien@qaute.edu.vn", AdvisorType.LECTURER,
+            "tuvanvien@qaute.edu.vn", AdvisorType.ADVISOR);
 
     private final UserRepository users;
     private final DepartmentRepository departments;
@@ -68,6 +72,7 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
         List<User> allUsers = users.findAll();
         refreshGeneratedDepartmentAccountNames(allUsers);
         List<AdvisorProfile> allProfiles = advisorProfiles.findAll();
+        refreshGeneratedConsultantTitles(allProfiles);
         List<Faculty> allFaculties = faculties.findAll();
         int managersCreated = 0;
         int managerAssignmentsAdded = 0;
@@ -95,8 +100,9 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
                 Faculty faculty = facultyFor(department, allFaculties);
                 User consultant = newUser("consultant", department, allFaculties);
                 consultant.setRole(Role.CONSULTANT);
-                consultant.setTitle(AdvisorType.ADVISOR.getLabel());
-                consultant.setConsultantTitles(Set.of(AdvisorType.ADVISOR));
+                AdvisorType advisorType = DemoAdvisorTitles.forIndex(department.getId().intValue());
+                consultant.setTitle(advisorType.getLabel());
+                consultant.setConsultantTitles(Set.of(advisorType));
                 if (faculty != null) {
                     consultant.setFaculty(faculty);
                     consultant.setAssignedTopics(new HashSet<>(facultyTopics.findByFacultyIdOrderByIdAsc(faculty.getId())));
@@ -106,7 +112,7 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
                 AdvisorProfile profile = new AdvisorProfile();
                 profile.setUser(consultant);
                 profile.setDepartment(department);
-                profile.setAdvisorType(AdvisorType.ADVISOR);
+                profile.setAdvisorType(advisorType);
                 profile.setAudience(AudienceType.SINH_VIEN);
                 profile.setStatus(AdvisorStatus.ACTIVE);
                 profile.setDeleted(false);
@@ -158,6 +164,11 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
         user.setEmail(email);
         Role role = "manager".equals(rolePrefix) ? Role.MANAGER : Role.CONSULTANT;
         user.setFullName(DemoPersonNames.forRole(role, department.getId().intValue()));
+        if (role == Role.CONSULTANT) {
+            AdvisorType advisorType = DemoAdvisorTitles.forIndex(department.getId().intValue());
+            user.setTitle(advisorType.getLabel());
+            user.setConsultantTitles(new HashSet<>(Set.of(advisorType)));
+        }
         user.setPasswordHash(passwordEncoder.encode(demoPassword));
         user.setRole("manager".equals(rolePrefix) ? Role.MANAGER : Role.CONSULTANT);
         user.setStatus(UserStatus.ACTIVE);
@@ -189,6 +200,41 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
             }
             user.setFullName(DemoPersonNames.forRole(role, nameIndex));
             users.save(user);
+        }
+    }
+
+    private void refreshGeneratedConsultantTitles(List<AdvisorProfile> allProfiles) {
+        for (AdvisorProfile profile : allProfiles) {
+            User user = profile.getUser();
+            if (profile.isDeleted() || user == null || user.getRole() != Role.CONSULTANT) continue;
+            String email = user.getEmail() == null ? "" : user.getEmail().toLowerCase(Locale.ROOT);
+            AdvisorType advisorType = LOCAL_TEST_ACCOUNT_TITLES.get(email);
+            Integer index = generatedConsultantIndex(email);
+            if (advisorType == null && index != null) advisorType = DemoAdvisorTitles.forIndex(index);
+            if (advisorType == null) continue;
+
+            profile.setAdvisorType(advisorType);
+            user.setTitle(advisorType.getLabel());
+            user.setConsultantTitles(new HashSet<>(Set.of(advisorType)));
+            users.save(user);
+            advisorProfiles.save(profile);
+        }
+    }
+
+    private Integer generatedConsultantIndex(String email) {
+        String prefix;
+        if (email.startsWith("demo.consultant")) prefix = "demo.consultant";
+        else if (email.startsWith("consultant.dept")) prefix = "consultant.dept";
+        else return null;
+
+        String suffix = email.substring(prefix.length());
+        int end = 0;
+        while (end < suffix.length() && Character.isDigit(suffix.charAt(end))) end++;
+        if (end == 0) return null;
+        try {
+            return Integer.parseInt(suffix.substring(0, end));
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 

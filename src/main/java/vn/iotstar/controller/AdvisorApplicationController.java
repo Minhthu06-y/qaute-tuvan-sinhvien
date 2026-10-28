@@ -61,7 +61,8 @@ public class AdvisorApplicationController {
         var topics = topicsRepository();
         model.addAttribute("departments", departments);
         model.addAttribute("topics", topics);
-        model.addAttribute("advisorTypes", java.util.List.of(AdvisorType.ADVISOR, AdvisorType.LECTURER, AdvisorType.STAFF));
+        model.addAttribute("advisorTypes", java.util.List.of(
+                AdvisorType.STUDENT, AdvisorType.ADVISOR, AdvisorType.LECTURER, AdvisorType.STAFF));
         model.addAttribute("audiences", vn.iotstar.enums.AudienceType.values());
         return "advisor-application";
     }

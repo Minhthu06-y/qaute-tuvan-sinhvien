@@ -56,7 +56,7 @@ public class AdvisorApplicationService {
         if (applications.findFirstByApplicantIdAndStatusOrderByCreatedAtDesc(
                 applicant.getId(), AdvisorApplicationStatus.PENDING).isPresent())
             throw new FieldException("departmentId", "Bạn đã có yêu cầu đang chờ duyệt");
-        if (form.getAdvisorType() == AdvisorType.STUDENT || form.getAdvisorType() == AdvisorType.TEAM_LEADER)
+        if (form.getAdvisorType() == AdvisorType.TEAM_LEADER)
             throw new FieldException("advisorType", "Chọn chức danh tư vấn viên phù hợp");
 
         Department department = departments.findById(form.getDepartmentId())

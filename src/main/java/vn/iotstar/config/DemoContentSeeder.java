@@ -123,9 +123,10 @@ public class DemoContentSeeder implements CommandLineRunner {
             Department department = departmentList.get((i - 1) % departmentList.size());
             Faculty faculty = facultyByDepartment.get(department.getId());
             User consultant = account("consultant", i, Role.CONSULTANT, department, faculty);
-            consultant.setTitle("T\u01B0 v\u1EA5n vi\u00EAn");
+            AdvisorType advisorType = DemoAdvisorTitles.forIndex(i);
+            consultant.setTitle(advisorType.getLabel());
             // Hibernate may merge this entity and mutate the collection while syncing it.
-            consultant.setConsultantTitles(new HashSet<>(Set.of(AdvisorType.ADVISOR)));
+            consultant.setConsultantTitles(new HashSet<>(Set.of(advisorType)));
             List<FacultyTopic> assignedTopics = faculty == null ? List.of()
                     : topicsByFaculty.getOrDefault(faculty.getId(), List.of());
             consultant.setAssignedTopics(new HashSet<>(assignedTopics));
@@ -134,7 +135,7 @@ public class DemoContentSeeder implements CommandLineRunner {
             AdvisorProfile profile = advisorProfiles.findByUserId(consultant.getId()).orElseGet(AdvisorProfile::new);
             profile.setUser(consultant);
             profile.setDepartment(department);
-            profile.setAdvisorType(AdvisorType.ADVISOR);
+            profile.setAdvisorType(advisorType);
             profile.setAudience(AudienceType.SINH_VIEN);
             profile.setStatus(AdvisorStatus.ACTIVE);
             profile.setDeleted(false);

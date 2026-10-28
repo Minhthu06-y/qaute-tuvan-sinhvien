@@ -95,6 +95,7 @@ public class AdvisorProfileBootstrap implements CommandLineRunner {
     private AdvisorType resolveAdvisorType(User user) {
         if (user == null) return AdvisorType.ADVISOR;
         if (user.hasConsultantTitle(AdvisorType.TEAM_LEADER)) return AdvisorType.TEAM_LEADER;
+        if (user.hasConsultantTitle(AdvisorType.STUDENT)) return AdvisorType.STUDENT;
         if (user.hasConsultantTitle(AdvisorType.STAFF)) return AdvisorType.STAFF;
         if (user.hasConsultantTitle(AdvisorType.LECTURER)) return AdvisorType.LECTURER;
         if (user.hasConsultantTitle(AdvisorType.ADVISOR)) return AdvisorType.ADVISOR;
