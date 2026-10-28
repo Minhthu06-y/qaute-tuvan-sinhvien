@@ -82,7 +82,8 @@ public class ReviewService {
         review.setDecision(form.getDecision());
         review.setReason(form.getReason().trim());
         review.setBetterAnswer(approve ? null : form.getBetterAnswer().trim());
-        reviews.save(review);
+        // Flush the review against the canonical dbo.answers table before notifying either user.
+        reviews.saveAndFlush(review);
 
         String title = question.getTitle();
         String message = approve
