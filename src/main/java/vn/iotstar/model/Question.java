@@ -58,6 +58,12 @@ public class Question {
     private boolean locked;
     private boolean replyNotification;
     private String attachmentUrl;
+    /** Soft deletion keeps question/report history and answer references intact. */
+    private Boolean deleted = false;
+    private LocalDateTime deletedAt;
+    @Nationalized
+    @Column(length = 150)
+    private String deletedBy;
 
     protected Question() {}
 
@@ -114,4 +120,10 @@ public class Question {
     public void setReplyNotification(boolean replyNotification) { this.replyNotification = replyNotification; }
     public String getAttachmentUrl() { return attachmentUrl; }
     public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+    public boolean isDeleted() { return Boolean.TRUE.equals(deleted); }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
 }

@@ -199,14 +199,19 @@ public class AuthController {
     public String register(@RequestParam String displayName, @RequestParam String email,
             @RequestParam String password, @RequestParam(required = false) Long facultyId, HttpSession session,
             RedirectAttributes flash, Model model) {
-        String normalizedEmail = email.trim().toLowerCase();
+        String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!isValidEmail(normalizedEmail)) {
+            model.addAttribute("error", "Địa chỉ email chưa đúng cú pháp.");
+            model.addAttribute("faculties", faculties.findAll());
+            return "register";
+        }
         deletedAccountEmails.releaseForReuse(normalizedEmail);
         if (users.existsByEmailIgnoreCase(normalizedEmail)) {
             model.addAttribute("error", "Email này đã được đăng ký.");
             model.addAttribute("faculties", faculties.findAll());
             return "register";
         }
-        if (password.length() < 6 || displayName.isBlank() || !normalizedEmail.contains("@")) {
+        if (password.length() < 6 || displayName.isBlank()) {
             model.addAttribute("error", "Vui lòng nhập tên, email hợp lệ và mật khẩu có ít nhất 6 ký tự.");
             model.addAttribute("faculties", faculties.findAll());
             return "register";
@@ -229,6 +234,17 @@ public class AuthController {
             model.addAttribute("faculties", faculties.findAll());
             return "register";
         }
+    }
+
+    private boolean isValidEmail(String email) {
+        if (email == null || email.length() > 254) return false;
+        int at = email.lastIndexOf('@');
+        if (at <= 0 || at == email.length() - 1) return false;
+        String localPart = email.substring(0, at);
+        if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.contains("..")) return false;
+        return email.matches("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+                + "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+                + "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$");
     }
 
     @GetMapping("/register/verify")

@@ -22,7 +22,7 @@ public class OtpService {
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String senderEmail;
 
     public OtpService(
@@ -51,6 +51,8 @@ public class OtpService {
     }
 
     private void sendOtp(String email, String subject, Function<String, String> messageText) {
+        if (senderEmail == null || senderEmail.isBlank())
+            throw new IllegalStateException("Chưa cấu hình dịch vụ email nên chưa thể gửi OTP. Vui lòng thử lại sau.");
         String normalizedEmail = email.trim().toLowerCase();
         LocalDateTime now = LocalDateTime.now();
 
@@ -81,13 +83,12 @@ public class OtpService {
 
         otpRepository.save(otp);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
-        message.setTo(normalizedEmail);
-        message.setSubject(subject);
-        message.setText(messageText.apply(code));
-
         try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(senderEmail);
+            message.setTo(normalizedEmail);
+            message.setSubject(subject);
+            message.setText(messageText.apply(code));
             mailSender.send(message);
         } catch (RuntimeException ex) {
             otp.setUsed(true);

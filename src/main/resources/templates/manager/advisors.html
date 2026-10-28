@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Phân khoa tư vấn viên')}"></head>
+<body class="admin-body"><div class="admin-shell"><aside th:replace="~{admin/layout :: sidebar('advisors')}"></aside><div class="admin-main"><header th:replace="~{admin/layout :: topbar}"></header>
+<main class="admin-content"><div th:replace="~{admin/layout :: alerts}"></div>
+  <div class="admin-page-heading"><div><div class="admin-kicker">Đội ngũ khoa</div><h1>Phân khoa cho tư vấn viên</h1><p>Manager chỉ có thể phân công trong các khoa mình quản lý. Chuyên đề sẽ được đồng bộ theo khoa mới.</p></div></div>
+  <section class="admin-card"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tư vấn viên</th><th>Khoa hiện tại</th><th>Chức danh</th><th>Trạng thái</th><th>Phân công khoa</th></tr></thead><tbody>
+    <tr th:each="advisor : ${advisors}"><td><strong th:text="${advisor.user.fullName}">Tên</strong><small class="admin-secondary-text d-block" th:text="${advisor.user.email}">email</small></td><td th:text="${advisor.department.name}">Khoa</td><td th:text="${advisor.advisorType.label}">Chức danh</td><td th:text="${advisor.status}">ACTIVE</td><td><form class="d-flex gap-2" th:action="@{/manager/advisors/{id}/department(id=${advisor.id})}" method="post"><select class="form-select form-select-sm" name="departmentId" required><option th:each="department : ${departments}" th:value="${department.id}" th:selected="${department.id == advisor.department.id}" th:text="${department.name}">Khoa</option></select><button class="btn btn-outline-primary btn-sm" type="submit">Lưu</button></form></td></tr>
+    <tr th:if="${#lists.isEmpty(advisors)}"><td colspan="5" class="admin-empty">Chưa có tư vấn viên thuộc khoa bạn phụ trách.</td></tr>
+  </tbody></table></div></section>
+</main></div></div></body></html>

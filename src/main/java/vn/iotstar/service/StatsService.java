@@ -3,6 +3,10 @@ package vn.iotstar.service;
 import vn.iotstar.dto.StatsDto;
 import vn.iotstar.dto.StatsDto.*;
 import vn.iotstar.entity.AnswerReview;
+import vn.iotstar.entity.AnswerVote;
+import vn.iotstar.entity.Department;
+import vn.iotstar.enums.Role;
+import vn.iotstar.repository.AnswerVoteRepository;
 import vn.iotstar.model.Answer;
 import vn.iotstar.model.Question;
 import vn.iotstar.repository.AnswerRepository;
@@ -25,6 +29,7 @@ public class StatsService {
     private final QuestionRepository questions;
     private final AnswerRepository answers;
     private final AnswerReviewRepository reviews;
+    private final AnswerVoteRepository votes;
 
     private LocalDate startOf(String period, LocalDate today) {
         return "month".equals(period) ? today.withDayOfMonth(1) : today.with(DayOfWeek.MONDAY);
@@ -32,20 +37,34 @@ public class StatsService {
 
     @Transactional(readOnly = true)
     public StatsDto overview(String period) {
+        return overview(period, null);
+    }
+
+    @Transactional(readOnly = true)
+    public StatsDto overview(String period, Set<Long> allowedDepartments) {
         LocalDate today = LocalDate.now();
         boolean month = "month".equals(period);
         LocalDate fromDate = startOf(period, today);
         LocalDateTime from = fromDate.atStartOfDay();
         LocalDateTime to = today.plusDays(1).atStartOfDay();
 
-        long total = questions.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to);
-        long answered = questions.countByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                QuestionStatus.ANSWERED, from, to);
-        long unanswered = countUnanswered(from, to);
-        long totalAnswers = answers.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to);
+        List<Question> periodQuestions = questions.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to).stream()
+                .filter(question -> !question.isDeleted()).toList();
+        periodQuestions = periodQuestions.stream()
+                .filter(question -> ScopeService.allows(allowedDepartments, question.getDepartment())).toList();
+        long total = periodQuestions.size();
+        long answered = periodQuestions.stream().filter(question -> question.getStatus() == QuestionStatus.ANSWERED).count();
+        long unanswered = periodQuestions.stream().filter(question -> isUnanswered(question.getStatus())).count();
+        List<Answer> periodAnswers = answers.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to).stream()
+                .filter(answer -> answer.getCreatedAt() != null && !answer.getCreatedAt().isBefore(from)
+                        && answer.getCreatedAt().isBefore(to))
+                .filter(answer -> !answer.getQuestion().isDeleted())
+                .filter(answer -> ScopeService.allows(allowedDepartments, answer.getQuestion().getDepartment()))
+                .toList();
+        long totalAnswers = periodAnswers.size();
 
-        Map<LocalDate, Long> questionsByDay = group(questions.createdTimes(from, to));
-        Map<LocalDate, Long> answersByDay = group(answers.createdTimes(from, to));
+        Map<LocalDate, Long> questionsByDay = group(periodQuestions.stream().map(Question::getCreatedAt).toList());
+        Map<LocalDate, Long> answersByDay = group(periodAnswers.stream().map(Answer::getCreatedAt).toList());
         List<String> labels = new ArrayList<>();
         List<Long> questionSeries = new ArrayList<>();
         List<Long> answerSeries = new ArrayList<>();
@@ -55,12 +74,18 @@ public class StatsService {
             answerSeries.add(answersByDay.getOrDefault(day, 0L));
         }
 
-        List<AdvisorStat> topAdvisors = answers.topAdvisors(from, to, PageRequest.of(0, 5)).stream()
-                .map(row -> new AdvisorStat((String) row[0], (String) row[1], ((Number) row[2]).longValue()))
+        record AuthorKey(String name, String email) {}
+        List<AdvisorStat> topAdvisors = periodAnswers.stream()
+                .collect(Collectors.groupingBy(answer -> new AuthorKey(answer.getAuthor().getFullName(),
+                        answer.getAuthor().getEmail()), Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<AuthorKey, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> new AdvisorStat(entry.getKey().name(), entry.getKey().email(), entry.getValue()))
                 .toList();
 
         Map<String, long[]> departmentCounts = new TreeMap<>();
-        for (Question question : questions.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to)) {
+        for (Question question : periodQuestions) {
             String name = question.getDepartment() != null ? question.getDepartment().getName()
                     : question.getFaculty() != null ? question.getFaculty().getName() : "Chưa phân khoa";
             long[] counts = departmentCounts.computeIfAbsent(name, ignored -> new long[3]);
@@ -72,15 +97,45 @@ public class StatsService {
                 .map(entry -> new DeptStat(entry.getKey(), entry.getValue()[0], entry.getValue()[1], entry.getValue()[2]))
                 .toList();
 
-        List<RatingStat> ratings = reviews.advisorRatings(from, to).stream()
-                .map(row -> new RatingStat((String) row[0], (String) row[1],
-                        ((Number) row[2]).doubleValue(), ((Number) row[3]).longValue()))
+        List<AnswerReview> periodReviews = reviews
+                .findByRatingIsNotNullAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(from, to)
+                .stream().filter(review -> !review.getAnswer().getQuestion().isDeleted())
+                .filter(review -> ScopeService.allows(allowedDepartments, review.getAnswer().getQuestion().getDepartment()))
                 .toList();
+        Map<AuthorKey, java.util.IntSummaryStatistics> ratingsByAuthor = periodReviews.stream()
+                .collect(Collectors.groupingBy(review -> new AuthorKey(review.getAnswer().getAuthor().getFullName(),
+                        review.getAnswer().getAuthor().getEmail()),
+                        Collectors.summarizingInt(AnswerReview::getRating)));
+        List<RatingStat> ratings = ratingsByAuthor.entrySet().stream()
+                .map(entry -> new RatingStat(entry.getKey().name(), entry.getKey().email(),
+                        entry.getValue().getAverage(), entry.getValue().getCount())).toList();
+        Double averageRating = periodReviews.isEmpty() ? null
+                : periodReviews.stream().mapToInt(AnswerReview::getRating).average().orElse(0.0);
+
+        Map<String, long[]> voteCounts = new TreeMap<>();
+        for (AnswerVote vote : votes.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to)) {
+            Answer answer = vote.getAnswer();
+            Question question = answer.getQuestion();
+            Department department = question.getDepartment();
+            if (vote.getCreatedAt() == null || vote.getCreatedAt().isBefore(from) || !vote.getCreatedAt().isBefore(to)
+                    || question.isDeleted() || answer.getAuthor().getRole() != Role.MANAGER
+                    || !ScopeService.allows(allowedDepartments, department)) continue;
+            String departmentName = department == null ? "Chưa phân khoa" : department.getName();
+            long[] counts = voteCounts.computeIfAbsent(departmentName, ignored -> new long[2]);
+            if (vote.getVoteType() == vn.iotstar.enums.VoteType.LIKE) counts[0]++;
+            else counts[1]++;
+        }
+        List<VoteDeptStat> managerAnswerVotes = voteCounts.entrySet().stream()
+                .map(entry -> new VoteDeptStat(entry.getKey(), entry.getValue()[0], entry.getValue()[1])).toList();
+        long managerLikes = managerAnswerVotes.stream().mapToLong(VoteDeptStat::getLikes).sum();
+        long managerDislikes = managerAnswerVotes.stream().mapToLong(VoteDeptStat::getDislikes).sum();
 
         return new StatsDto(month ? "month" : "week", fromDate.toString(), today.toString(),
-                total, answered, unanswered, totalAnswers, answers.countByApprovalStatus(ApprovalStatus.PENDING),
-                reviews.averageRating(from, to), labels, questionSeries, answerSeries, topAdvisors,
-                byDepartment, ratings);
+                total, answered, unanswered, totalAnswers, answers.findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus.PENDING)
+                        .stream().filter(answer -> !answer.getQuestion().isDeleted())
+                        .filter(answer -> ScopeService.allows(allowedDepartments, answer.getQuestion().getDepartment())).count(),
+                averageRating, labels, questionSeries, answerSeries, topAdvisors,
+                byDepartment, ratings, managerLikes, managerDislikes, managerAnswerVotes);
     }
 
     @Transactional(readOnly = true)

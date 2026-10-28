@@ -165,6 +165,29 @@ public class AdvisorService {
         return now;
     }
 
+    @Transactional
+    public void assignDepartment(Long id, Long departmentId, String actor, Set<Long> allowedDepts) {
+        AdvisorProfile profile = get(id);
+        if (!ScopeService.allows(allowedDepts, profile.getDepartment()))
+            throw new AccessDeniedException("Tư vấn viên hiện không thuộc khoa bạn phụ trách");
+        Department target = departments.findById(departmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khoa / đơn vị"));
+        if (!ScopeService.allows(allowedDepts, target))
+            throw new AccessDeniedException("Bạn không được phân công vào khoa này");
+        Faculty faculty = faculties.findAll().stream()
+                .filter(candidate -> candidate.getName().trim().equalsIgnoreCase(target.getName().trim()))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Khoa này chưa có danh mục chuyên đề"));
+        boolean moved = !profile.getDepartment().getId().equals(target.getId());
+        profile.setDepartment(target);
+        if (moved) {
+            profile.setHead(false);
+            profile.getUser().setFaculty(faculty);
+            profile.getUser().setAssignedTopics(new HashSet<>(topics.findByFacultyIdOrderByIdAsc(faculty.getId())));
+        }
+        logs.log(actor, "MANAGER", "ASSIGN_CONSULTANT_DEPARTMENT",
+                profile.getUser().getEmail() + " -> " + target.getName());
+    }
+
     private void applyHead(AdvisorProfile p, boolean head) {
         if (head) {
             advisors.findByDepartmentIdAndHeadTrue(p.getDepartment().getId())

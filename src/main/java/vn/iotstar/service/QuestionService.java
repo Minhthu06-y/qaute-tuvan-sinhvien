@@ -26,14 +26,16 @@ public class QuestionService {
 
     @Transactional(readOnly = true)
     public List<Question> getPublicQuestions() {
-        return questions.findByIsPublicTrueOrderByCreatedAtDesc();
+        return questions.findByIsPublicTrueOrderByCreatedAtDesc().stream()
+                .filter(question -> !question.isDeleted()).toList();
     }
 
     @Transactional(readOnly = true)
     public List<Question> getMyQuestions(String email) {
         User user = users.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
-        return questions.findByAskerIdOrderByCreatedAtDesc(user.getId());
+        return questions.findByAskerIdOrderByCreatedAtDesc(user.getId()).stream()
+                .filter(question -> !question.isDeleted()).toList();
     }
 
     @Transactional

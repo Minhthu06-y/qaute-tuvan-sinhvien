@@ -30,6 +30,7 @@ public class QuestionBrowseService {
         String keyword = kw == null ? "" : kw.trim().toLowerCase(Locale.ROOT);
         String selectedCategory = category == null ? "" : category.trim();
         List<Question> all = questions.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+                .filter(question -> !question.isDeleted())
                 .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
                 .filter(question -> status == null || matchesStatus(question.getStatus(), status))
                 .filter(question -> deptId == null || (question.getDepartment() != null
@@ -48,6 +49,7 @@ public class QuestionBrowseService {
 
     public List<String> categories(Set<Long> allowed) {
         return questions.findAll().stream()
+                .filter(question -> !question.isDeleted())
                 .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
                 .map(Question::getCategory)
                 .filter(category -> category != null && !category.isBlank())
@@ -61,6 +63,7 @@ public class QuestionBrowseService {
         Map<String, Long> counts = new LinkedHashMap<>();
         for (QuestionStatus status : QuestionStatus.values()) counts.put(status.name(), 0L);
         questions.findAll().stream()
+                .filter(question -> !question.isDeleted())
                 .filter(question -> ScopeService.allows(allowed, question.getDepartment()))
                 .forEach(question -> counts.merge(normalizeStatus(question.getStatus()).name(), 1L, Long::sum));
         return counts;
@@ -68,6 +71,7 @@ public class QuestionBrowseService {
 
     public Question get(Long id, Set<Long> allowed) {
         Question question = questions.findById(id)
+                .filter(candidate -> !candidate.isDeleted())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu hỏi"));
         if (!ScopeService.allows(allowed, question.getDepartment()))
             throw new AccessDeniedException("Câu hỏi không thuộc khoa bạn phụ trách");
@@ -76,6 +80,30 @@ public class QuestionBrowseService {
 
     public List<Answer> thread(Long questionId) {
         return answers.findByQuestionIdOrderByCreatedAtAsc(questionId);
+    }
+
+    public Answer answer(Long answerId) {
+        return answers.findById(answerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu trả lời"));
+    }
+
+    @Transactional
+    public void editManagerAnswer(Long answerId, String content, String managerEmail, Set<Long> allowed) {
+        if (content == null || content.isBlank() || content.trim().length() > 10000)
+            throw new IllegalArgumentException("Nội dung bình luận phải có từ 1 đến 10.000 ký tự");
+        Answer answer = answers.findById(answerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy câu trả lời"));
+        Question question = get(answer.getQuestion().getId(), allowed);
+        User manager = users.findByEmailIgnoreCase(managerEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản Manager"));
+        if (!answer.getAuthor().getId().equals(manager.getId()))
+            throw new AccessDeniedException("Bạn chỉ được sửa bình luận do mình viết");
+        answer.setBody(content.trim());
+        answer.setEditedAt(LocalDateTime.now());
+        answers.save(answer);
+        if (question.getAsker() != null)
+            notifications.notify(question.getAsker(), "Manager đã chỉnh sửa câu trả lời.", "/manager/questions/" + question.getId());
+        logs.log(managerEmail, "MANAGER", "EDIT_ANSWER", "answer#" + answerId);
     }
 
     @Transactional

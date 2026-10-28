@@ -15,6 +15,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     List<Answer> findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus approvalStatus);
     boolean existsByQuestionIdAndApprovalStatus(Long questionId, ApprovalStatus approvalStatus);
     long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
+    List<Answer> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
     long countByApprovalStatus(ApprovalStatus approvalStatus);
     List<Answer> findByQuestionIdAndApprovalStatusOrderByCreatedAtAsc(Long questionId, ApprovalStatus status);
     @Query("select a.createdAt from Answer a where a.createdAt >= :from and a.createdAt < :to")

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Yêu cầu làm tư vấn viên')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<aside th:replace="~{fragments :: sidebar('advisor-application')}"></aside>
+<div class="page-shell"><main class="page-content">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div class="page-heading"><div><div class="eyebrow">Đội ngũ QAUTE</div><h1>Yêu cầu làm tư vấn viên</h1><p class="heading-caption">Manager của khoa / đơn vị sẽ xem xét yêu cầu này.</p></div></div>
+  <section th:if="${application != null}" class="mail-card p-4 mb-3">
+    <h2 class="h5">Yêu cầu gần nhất</h2>
+    <p class="mb-2">Khoa / đơn vị: <strong th:text="${application.department.name}">Khoa</strong> · Chức danh: <strong th:text="${application.advisorType.label}">Tư vấn viên</strong></p>
+    <p class="mb-2">Trạng thái: <span class="status-badge" th:text="${application.status}">PENDING</span></p>
+    <p class="mb-0" th:if="${application.reviewNote != null}" th:text="${application.reviewNote}">Ghi chú duyệt</p>
+  </section>
+  <section th:if="${application == null || application.status.name() != 'PENDING'}" class="mail-card p-4">
+    <form th:action="@{/advisor-application}" th:object="${form}" method="post">
+      <div class="mb-3"><label class="form-label" for="departmentId">Khoa / đơn vị muốn tham gia</label><select id="departmentId" class="form-select" th:field="*{departmentId}" required><option value="">Chọn khoa / đơn vị</option><option th:each="department : ${departments}" th:value="${department.id}" th:text="${department.name}">Khoa</option></select><div class="text-danger small" th:errors="*{departmentId}"></div></div>
+      <div class="mb-3"><label class="form-label" for="topicId">Chuyên đề tư vấn</label><select id="topicId" class="form-select" th:field="*{topicId}" required><option value="">Chọn chuyên đề</option><option th:each="topic : ${topics}" th:value="${topic.id}" th:attr="data-department=${topic.faculty.name}" th:text="${topic.faculty.name + ' · ' + topic.name}">Chuyên đề</option></select><div class="text-danger small" th:errors="*{topicId}"></div></div>
+      <div class="row g-3"><div class="col-md-6 mb-3"><label class="form-label" for="advisorType">Chức danh</label><select id="advisorType" class="form-select" th:field="*{advisorType}" required><option value="">Chọn chức danh</option><option th:each="type : ${advisorTypes}" th:value="${type}" th:text="${type.label}">Tư vấn viên</option></select><div class="text-danger small" th:errors="*{advisorType}"></div></div>
+      <div class="col-md-6 mb-3"><label class="form-label" for="audience">Đối tượng tư vấn</label><select id="audience" class="form-select" th:field="*{audience}" required><option value="">Chọn đối tượng</option><option th:each="audience : ${audiences}" th:value="${audience}" th:text="${audience}">Sinh viên</option></select><div class="text-danger small" th:errors="*{audience}"></div></div></div>
+      <div class="mb-3"><label class="form-label" for="phone">Số điện thoại liên hệ</label><input id="phone" class="form-control" th:field="*{phone}" placeholder="0912345678"><div class="text-danger small" th:errors="*{phone}"></div></div>
+      <div class="mb-3"><label class="form-label" for="motivation">Giới thiệu kinh nghiệm / lý do đăng ký</label><textarea id="motivation" class="form-control" th:field="*{motivation}" rows="4" maxlength="2000"></textarea><div class="text-danger small" th:errors="*{motivation}"></div></div>
+      <button class="btn btn-primary btn-sm" type="submit">Gửi yêu cầu</button>
+    </form>
+  </section>
+</main><div th:replace="~{fragments :: footer}"></div></div>
+<div th:replace="~{fragments :: scripts}"></div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const dept = document.getElementById('departmentId');
+  const topic = document.getElementById('topicId');
+  const syncTopics = () => {
+    const name = dept.options[dept.selectedIndex]?.textContent.trim().toLocaleLowerCase();
+    [...topic.options].forEach((option, index) => {
+      if (index === 0) return;
+      const visible = option.dataset.department?.trim().toLocaleLowerCase() === name;
+      option.hidden = !visible;
+      if (!visible && option.selected) option.selected = false;
+    });
+  };
+  dept.addEventListener('change', syncTopics);
+  syncTopics();
+});
+</script>
+</body>
+</html>

@@ -9,12 +9,12 @@
     <main class="admin-content">
       <div class="admin-page-heading">
         <div><div class="admin-kicker">Hỗ trợ sinh viên</div><h1>Chi tiết câu hỏi</h1><p>Xem nội dung và toàn bộ phản hồi trong cuộc trao đổi.</p></div>
-        <a class="btn btn-light btn-sm" th:href="@{/admin/student-questions}"><i class="bi bi-arrow-left me-1"></i>Danh sách câu hỏi</a>
+        <div class="d-flex gap-2"><form th:action="@{/admin/student-questions/{id}/delete(id=${question.id})}" method="post" onsubmit="return confirm('Gỡ câu hỏi này khỏi hệ thống?')"><button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Gỡ câu hỏi</button></form><a class="btn btn-light btn-sm" th:href="@{/admin/student-questions}"><i class="bi bi-arrow-left me-1"></i>Danh sách câu hỏi</a></div>
       </div>
       <section class="admin-card">
         <div class="admin-card-head"><div><h2 th:text="${question.subject}">Tiêu đề câu hỏi</h2><p><span th:text="${question.faculty != null ? question.faculty.name : 'Chưa phân khoa'}">Khoa</span><span th:if="${question.topic != null}" th:text="${' · ' + question.topic.name}"></span></p></div><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></div>
         <div class="admin-card-body">
-          <div class="d-flex justify-content-between flex-wrap gap-2 mb-3"><span class="admin-primary-text" th:text="${question.asker.displayName} + ' · ' + ${question.asker.email}">Sinh viên</span><span class="admin-secondary-text" th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</span></div>
+          <div class="d-flex justify-content-between flex-wrap gap-2 mb-3"><span class="admin-primary-text" th:text="${question.asker.displayName + ' · ' + question.asker.email}">Sinh viên</span><span class="admin-secondary-text" th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</span></div>
           <div class="admin-question-content" th:text="${question.body}">Nội dung câu hỏi</div>
           <a class="btn btn-light btn-sm mt-3" th:if="${question.attachmentUrl != null and !question.attachmentUrl.isBlank()}" th:href="${question.attachmentUrl}" target="_blank" rel="noopener"><i class="bi bi-paperclip me-1"></i>Mở tệp đính kèm</a>
         </div>

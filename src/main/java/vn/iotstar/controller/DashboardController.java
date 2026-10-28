@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class DashboardController {
     private final StatsService stats;
     private final ReportService reports;
     private final ActivityLogRepository logRepo;
+    private final ScopeService scope;
     @GetMapping("/admin/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
     public String adminDashboard(@RequestParam(defaultValue = "week") String period, Model m) {
@@ -31,8 +33,8 @@ public class DashboardController {
 
     @GetMapping("/manager/dashboard")
     @PreAuthorize("hasRole('MANAGER')")
-    public String managerDashboard(@RequestParam(defaultValue = "week") String period, Model m) {
-        var overview = combinedOverview(period);
+    public String managerDashboard(@RequestParam(defaultValue = "week") String period, Principal principal, Model m) {
+        var overview = stats.overview(period, scope.managerDepartments(principal.getName()));
         m.addAttribute("stats", overview); m.addAttribute("base", "/manager");
         m.addAttribute("chartMax", chartMax(overview));
         return "stats/dashboard";

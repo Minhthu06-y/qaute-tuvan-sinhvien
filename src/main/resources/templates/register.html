@@ -19,6 +19,7 @@
         <div th:if="${error}"
              class="alert alert-danger py-2"
              th:text="${error}"></div>
+        <div th:if="${error}" id="registrationErrorPopup" class="visually-hidden" th:text="${error}"></div>
 
         <h2 style="font-size:17px;font-weight:800;margin-bottom:5px">
             Đăng ký tài khoản
@@ -268,6 +269,10 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const registrationError = document.getElementById("registrationErrorPopup");
+    if (registrationError && registrationError.textContent.trim()) {
+        window.alert(registrationError.textContent.trim());
+    }
     const form = document.getElementById("registerForm");
 
     const yesRadio = document.getElementById("isStudentYes");

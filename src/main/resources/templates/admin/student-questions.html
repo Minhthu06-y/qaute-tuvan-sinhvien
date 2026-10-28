@@ -10,7 +10,7 @@
       <div th:replace="~{admin/layout :: alerts}"></div>
       <div class="admin-page-heading">
         <div><div class="admin-kicker">Hỗ trợ sinh viên</div><h1>Quản lý câu hỏi</h1><p>Theo dõi nội dung gửi đến các khoa và trạng thái phản hồi.</p></div>
-        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/dashboard}"><i class="bi bi-arrow-left me-1"></i>Tổng quan</a>
+        <div class="d-flex gap-2"><a class="btn btn-primary btn-sm" th:href="@{/admin/student-questions/new}"><i class="bi bi-plus-lg me-1"></i>Thêm câu hỏi</a><a class="btn btn-outline-primary btn-sm" th:href="@{/admin/dashboard}"><i class="bi bi-arrow-left me-1"></i>Tổng quan</a></div>
       </div>
 
       <div class="admin-stats">

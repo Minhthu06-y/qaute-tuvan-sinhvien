@@ -62,6 +62,21 @@ public class QuestionBrowseController {
         return "redirect:/manager/questions/" + id;
     }
 
+    @PostMapping("/manager/answers/{answerId}/edit")
+    @PreAuthorize("hasRole('MANAGER')")
+    public String editManagerAnswer(@PathVariable Long answerId, @RequestParam String content,
+            Principal principal, RedirectAttributes flash) {
+        try {
+            service.editManagerAnswer(answerId, content, principal.getName(),
+                    scope.managerDepartments(principal.getName()));
+            flash.addFlashAttribute("msg", "Đã cập nhật bình luận.");
+        } catch (IllegalArgumentException error) {
+            flash.addFlashAttribute("err", error.getMessage());
+        }
+        vn.iotstar.model.Answer answer = service.answer(answerId);
+        return "redirect:/manager/questions/" + answer.getQuestion().getId();
+    }
+
     private String list(String base, Set<Long> allowed, QuestionStatus status, Long deptId, String category,
                         String kw, int page, Model m) {
         m.addAttribute("base", base); m.addAttribute("status", status);

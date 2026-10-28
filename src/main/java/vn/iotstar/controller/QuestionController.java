@@ -1,7 +1,10 @@
 package vn.iotstar.controller;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -26,6 +29,9 @@ import vn.iotstar.service.CloudinaryStorageService;
 import vn.iotstar.service.NotificationService;
 import vn.iotstar.service.SessionContext;
 import vn.iotstar.service.ScopeService;
+import vn.iotstar.service.AnswerVoteService;
+import vn.iotstar.service.AnswerVoteService.VoteSummary;
+import vn.iotstar.service.QuestionModerationService;
 
 @Controller
 public class QuestionController {
@@ -42,17 +48,20 @@ public class QuestionController {
     private final AdvisorProfileRepository advisorProfiles;
     private final AdvisorPresenceService advisorPresence;
     private final ScopeService scope;
+    private final AnswerVoteService answerVotes;
+    private final QuestionModerationService moderation;
 
     public QuestionController(QuestionRepository questions, AnswerRepository answers, FacultyRepository faculties,
             DepartmentRepository departments, FacultyTopicRepository topics,
             QuestionTransferRepository transfers, SessionContext sessionContext, NotificationService notifications,
             CloudinaryStorageService cloudinary, UserRepository users, AdvisorProfileRepository advisorProfiles,
-            AdvisorPresenceService advisorPresence, ScopeService scope) {
+            AdvisorPresenceService advisorPresence, ScopeService scope, AnswerVoteService answerVotes,
+            QuestionModerationService moderation) {
         this.questions = questions; this.answers = answers; this.faculties = faculties; this.departments = departments;
         this.topics = topics; this.transfers = transfers;
         this.sessionContext = sessionContext; this.notifications = notifications; this.cloudinary = cloudinary;
         this.users = users; this.advisorProfiles = advisorProfiles; this.advisorPresence = advisorPresence;
-        this.scope = scope;
+        this.scope = scope; this.answerVotes = answerVotes; this.moderation = moderation;
     }
 
     @GetMapping("/questions") public String dashboard(@RequestParam(required = false) Long facultyId,
@@ -67,10 +76,12 @@ public class QuestionController {
         Long selectedFacultyId = null;
         Long selectedTopicId = null;
         if (viewer.isStudent()) {
-            all = questions.findByAskerIdOrderByCreatedAtDesc(viewer.user().getId());
+            all = questions.findByAskerIdOrderByCreatedAtDesc(viewer.user().getId()).stream()
+                    .filter(question -> !question.isDeleted()).toList();
             availableTopics = List.of();
         } else if (viewer.role() == Role.ADMIN) {
-            all = questions.findAllByOrderByCreatedAtDesc();
+            all = questions.findAllByOrderByCreatedAtDesc().stream()
+                    .filter(question -> !question.isDeleted()).toList();
             availableTopics = topics.findAllByOrderByFacultyIdAscIdAsc();
         } else if (viewer.isManager()) {
             List<vn.iotstar.entity.Department> assignedDepartments = departments.findAllById(allowedManagerDepartments);
@@ -84,6 +95,7 @@ public class QuestionController {
                     .flatMap(faculty -> topics.findByFacultyIdOrderByIdAsc(faculty.getId()).stream())
                     .toList();
             all = questions.findAllByOrderByCreatedAtDesc().stream()
+                    .filter(question -> !question.isDeleted())
                     .filter(question -> ScopeService.allows(allowedManagerDepartments, question.getDepartment()))
                     .toList();
             if (selectedFacultyId != null) {
@@ -100,6 +112,7 @@ public class QuestionController {
             Long consultantFacultyId = viewer.user().getFaculty() == null ? null : viewer.user().getFaculty().getId();
             all = consultantFacultyId == null ? List.of()
                     : questions.findByFacultyIdAndLockedFalseOrderByCreatedAtDesc(consultantFacultyId).stream()
+                            .filter(question -> !question.isDeleted())
                             .filter(question -> canHandle(viewer, question)).toList();
             availableTopics = consultantFacultyId == null ? List.of() : viewer.user().getAssignedTopics().stream()
                     .filter(topic -> topic.getFaculty() != null && topic.getFaculty().getId().equals(consultantFacultyId))
@@ -155,7 +168,9 @@ public class QuestionController {
         if (viewer == null) return "redirect:/login";
         if (!viewer.isStudent()) return "redirect:/questions";
         model.addAttribute("faculties", faculties.findAll());
-        model.addAttribute("topics", topics.findAllByOrderByFacultyIdAscIdAsc()); return "question-new";
+        model.addAttribute("topics", topics.findAllByOrderByFacultyIdAscIdAsc());
+        model.addAttribute("cloudinaryConfigured", cloudinary.isConfigured());
+        return "question-new";
     }
 
     @PostMapping("/questions") public String createQuestion(@RequestParam String body,
@@ -174,14 +189,20 @@ public class QuestionController {
         }
         String subject = body.trim().replaceAll("\\s+", " ");
         if (subject.length() > 240) subject = subject.substring(0, 237) + "...";
+        String attachmentUrl = null;
+        if (attachment != null && !attachment.isEmpty()) {
+            try {
+                attachmentUrl = cloudinary.upload(attachment);
+            } catch (IllegalStateException | java.io.IOException ex) {
+                flash.addFlashAttribute("error", ex.getMessage());
+                return "redirect:/questions/new";
+            }
+        }
         Question question = new Question(viewer.user(), faculty, subject, body.trim(), LocalDateTime.now());
         question.setTopic(topic);
         question.setDepartment(departmentFor(faculty));
+        question.setAttachmentUrl(attachmentUrl);
         question = questions.save(question);
-        if (attachment != null && !attachment.isEmpty()) {
-            try { question.setAttachmentUrl(cloudinary.upload(attachment)); questions.save(question); }
-            catch (Exception ex) { flash.addFlashAttribute("warning", ex.getMessage()); }
-        }
         flash.addFlashAttribute("success", "Câu hỏi đã được gửi đến " + faculty.getName() + ".");
         return "redirect:/questions/" + question.getId();
     }
@@ -211,6 +232,7 @@ public class QuestionController {
                 ? viewer.isStudent() || viewer.role() == Role.ADMIN
                         ? questions.findByIsPublicTrueOrderByCreatedAtDesc() : List.of()
                 : questions.findByFacultyIdAndIsPublicTrueOrderByCreatedAtDesc(selectedFaculty.getId());
+        publicQuestions = publicQuestions.stream().filter(question -> !question.isDeleted()).toList();
         if (selectedTopic != null) {
             Long selectedId = selectedTopic.getId();
             publicQuestions = publicQuestions.stream().filter(question -> question.getTopic() != null
@@ -238,7 +260,8 @@ public class QuestionController {
     @GetMapping("/questions/{id}") public String detail(@PathVariable Long id, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         if (viewer == null) return "redirect:/login";
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanView(viewer, question);
         List<Answer> visibleAnswers = answers.findByQuestionIdOrderByCreatedAtAsc(id);
         if (viewer.isStudent()) visibleAnswers = visibleAnswers.stream().filter(a -> a.getApprovalStatus() == ApprovalStatus.APPROVED || a.getApprovalStatus() == ApprovalStatus.NOT_REQUIRED).toList();
@@ -251,6 +274,17 @@ public class QuestionController {
         model.addAttribute("canManageQuestion", canManage && !question.isLocked());
         model.addAttribute("canAnswerQuestion", managerScope || (!question.isLocked()
                 && viewer.isAdvisor() && canHandle(viewer, question)));
+        model.addAttribute("canReportQuestion", viewer.isAdvisor() && canHandle(viewer, question));
+        Map<Long, VoteSummary> voteSummaries = new HashMap<>();
+        Set<Long> editableAnswerIds = new HashSet<>();
+        for (Answer answer : visibleAnswers) {
+            voteSummaries.put(answer.getId(), answerVotes.summary(answer.getId(), viewer.user().getId()));
+            if (answer.getAuthor().getId().equals(viewer.user().getId())
+                    && ((viewer.isAdvisor() && canHandle(viewer, question)) || managerScope))
+                editableAnswerIds.add(answer.getId());
+        }
+        model.addAttribute("voteSummaries", voteSummaries);
+        model.addAttribute("editableAnswerIds", editableAnswerIds);
         return "question-detail";
     }
 
@@ -258,7 +292,8 @@ public class QuestionController {
             @RequestParam(defaultValue = "false") boolean requestApproval, HttpSession session, RedirectAttributes flash) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         if (viewer == null) return "redirect:/login";
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanAnswer(viewer, question);
         if (question.isLocked() && !viewer.isManager()) { flash.addFlashAttribute("error", "Câu hỏi đã khóa do chuyển khoa, không thể trả lời."); return "redirect:/questions/" + id; }
         if (body.isBlank()) { flash.addFlashAttribute("error", "Nội dung trả lời không được để trống."); return "redirect:/questions/" + id; }
@@ -281,18 +316,89 @@ public class QuestionController {
     @PostMapping("/questions/{id}/visibility") public String toggleVisibility(@PathVariable Long id, HttpSession session, RedirectAttributes flash) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         if (viewer == null) return "redirect:/login";
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanManage(viewer, question);
         question.setPublic(!question.isPublic()); questions.save(question);
         flash.addFlashAttribute("success", question.isPublic() ? "Câu hỏi đã được công khai." : "Câu hỏi đã chuyển về chế độ riêng tư.");
         return "redirect:/questions/" + id;
     }
 
+    @PostMapping("/questions/{id}/report") public String reportQuestion(@PathVariable Long id,
+            @RequestParam String reason, HttpSession session, RedirectAttributes flash) {
+        SessionContext.Viewer viewer = sessionContext.viewer(session);
+        if (viewer == null) return "redirect:/login";
+        if (!viewer.isAdvisor()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ensureCanView(viewer, question);
+        try {
+            moderation.report(id, viewer.user(), reason);
+            flash.addFlashAttribute("success", "Đã gửi báo cáo để Manager xem xét.");
+        } catch (IllegalArgumentException error) {
+            flash.addFlashAttribute("error", error.getMessage());
+        }
+        return "redirect:/questions/" + id;
+    }
+
+    @PostMapping("/answers/{id}/vote") public String voteForManagerAnswer(@PathVariable Long id,
+            @RequestParam VoteType voteType, HttpSession session, RedirectAttributes flash) {
+        SessionContext.Viewer viewer = sessionContext.viewer(session);
+        if (viewer == null) return "redirect:/login";
+        if (!viewer.isStudent()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        Answer answer = answers.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ensureCanView(viewer, answer.getQuestion());
+        try {
+            answerVotes.toggle(id, voteType, viewer.user());
+            flash.addFlashAttribute("success", "Đã cập nhật đánh giá câu trả lời.");
+        } catch (IllegalArgumentException error) {
+            flash.addFlashAttribute("error", error.getMessage());
+        }
+        return "redirect:/questions/" + answer.getQuestion().getId();
+    }
+
+    @PostMapping("/answers/{id}/edit") public String editAnswer(@PathVariable Long id,
+            @RequestParam String body, HttpSession session, RedirectAttributes flash) {
+        SessionContext.Viewer viewer = sessionContext.viewer(session);
+        if (viewer == null) return "redirect:/login";
+        Answer answer = answers.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = answer.getQuestion();
+        if (question.isDeleted()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        boolean allowed = answer.getAuthor().getId().equals(viewer.user().getId())
+                && ((viewer.isAdvisor() && canHandle(viewer, question))
+                    || (viewer.isManager() && managerCanAccess(viewer, question)));
+        if (!allowed) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (body == null || body.isBlank() || body.trim().length() > 10000) {
+            flash.addFlashAttribute("error", "Nội dung bình luận phải có từ 1 đến 10.000 ký tự.");
+            return "redirect:/questions/" + question.getId();
+        }
+        answer.setBody(body.trim());
+        answer.setEditedAt(LocalDateTime.now());
+        if (viewer.isAdvisor()) {
+            if (answer.getApprovalStatus() != ApprovalStatus.PENDING) {
+                answer.setApprovalStatus(ApprovalStatus.PENDING);
+                boolean hasAnotherPublishedAnswer = answers.findByQuestionIdOrderByCreatedAtAsc(question.getId()).stream()
+                        .anyMatch(other -> !other.getId().equals(answer.getId()) && other.isPublished());
+                if (!hasAnotherPublishedAnswer) question.setStatus(QuestionStatus.UNANSWERED);
+                notifications.notifyManagers(question.getFaculty().getId(), "approval",
+                        "Câu trả lời đã chỉnh sửa cần Manager duyệt lại.", question.getId());
+            }
+            answer.setReviewReason(null);
+        }
+        questions.save(question);
+        answers.save(answer);
+        flash.addFlashAttribute("success", viewer.isAdvisor()
+                ? "Đã cập nhật và gửi câu trả lời để duyệt lại."
+                : "Đã cập nhật bình luận.");
+        return "redirect:/questions/" + question.getId();
+    }
+
     @PostMapping("/questions/{id}/transfer") public String transfer(@PathVariable Long id, @RequestParam Long facultyId, @RequestParam Long topicId,
             @RequestParam String reason, HttpSession session, RedirectAttributes flash) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
         if (viewer == null) return "redirect:/login";
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanManage(viewer, question);
         Faculty target = faculties.findById(facultyId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         FacultyTopic targetTopic = topics.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));

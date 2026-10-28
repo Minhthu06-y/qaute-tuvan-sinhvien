@@ -26,6 +26,7 @@ public class Answer {
     private String body;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
@@ -58,6 +59,8 @@ public class Answer {
     public void setContent(String content) { this.body = content; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getEditedAt() { return editedAt; }
+    public void setEditedAt(LocalDateTime editedAt) { this.editedAt = editedAt; }
     public ApprovalStatus getApprovalStatus() { return approvalStatus; }
     public void setApprovalStatus(ApprovalStatus approvalStatus) { this.approvalStatus = approvalStatus; }
     public String getReviewReason() { return reviewReason; }

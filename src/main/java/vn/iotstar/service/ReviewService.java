@@ -30,6 +30,7 @@ public class ReviewService {
     public List<Answer> listByStatus(ApprovalStatus status, String managerEmail) {
         Set<Long> allowed = scope.managerDepartments(managerEmail);
         return answers.findByApprovalStatusOrderByCreatedAtAsc(status).stream()
+                .filter(answer -> !answer.getQuestion().isDeleted())
                 .filter(answer -> ScopeService.allows(allowed, answer.getQuestion().getDepartment()))
                 .toList();
     }
@@ -37,6 +38,7 @@ public class ReviewService {
     public Answer getForManager(Long id, String managerEmail) {
         Answer answer = answers.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Answer not found"));
+        if (answer.getQuestion().isDeleted()) throw new IllegalArgumentException("Question not found");
         if (!ScopeService.allows(scope.managerDepartments(managerEmail), answer.getQuestion().getDepartment()))
             throw new AccessDeniedException("Answer is outside the manager's departments");
         return answer;

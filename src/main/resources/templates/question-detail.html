@@ -23,6 +23,12 @@
         <div th:each="answer : ${answers}" class="reply-item">
           <div class="reply-head"><span class="mini-avatar" th:text="${#strings.substring(answer.author.displayName,0,1)}">T</span><div class="reply-author"><span th:text="${answer.author.displayName}">Tư vấn viên</span><small th:text="${answer.author.title}">Tư vấn viên khoa CNTT</small></div><div class="reply-time"><span th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 10:30</span><span class="status-badge status-pending ms-2" th:if="${answer.approvalStatus.name() == 'PENDING'}">Chờ duyệt</span><span class="status-badge status-answered ms-2" th:if="${answer.approvalStatus.name() == 'APPROVED'}">Đã duyệt</span></div></div>
           <div class="reply-body" th:text="${answer.body}">Câu trả lời của tư vấn viên.</div>
+          <small class="text-muted" th:if="${answer.editedAt != null}" th:text="'Đã chỉnh sửa ' + ${#temporals.format(answer.editedAt,'dd/MM/yyyy HH:mm')}">Đã chỉnh sửa</small>
+          <div th:if="${isStudent and (answer.author.role.name() == 'MANAGER' or answer.author.role.name() == 'CONSULTANT') and answer.published}" th:with="vote=${voteSummaries[answer.id]}" class="d-flex gap-2 mt-2">
+            <form th:action="@{/answers/{id}/vote(id=${answer.id})}" method="post"><input type="hidden" name="voteType" value="LIKE"><button class="btn btn-sm" th:classappend="${vote.userVote != null and vote.userVote.name() == 'LIKE' ? 'btn-primary' : 'btn-outline-primary'}" type="submit"><i class="bi bi-hand-thumbs-up me-1"></i><span th:text="${vote.likes}">0</span></button></form>
+            <form th:action="@{/answers/{id}/vote(id=${answer.id})}" method="post"><input type="hidden" name="voteType" value="DISLIKE"><button class="btn btn-sm" th:classappend="${vote.userVote != null and vote.userVote.name() == 'DISLIKE' ? 'btn-danger' : 'btn-outline-secondary'}" type="submit"><i class="bi bi-hand-thumbs-down me-1"></i><span th:text="${vote.dislikes}">0</span></button></form>
+          </div>
+          <details th:if="${editableAnswerIds.contains(answer.id)}" class="mt-3"><summary class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Sửa bình luận</summary><form class="mt-2" th:action="@{/answers/{id}/edit(id=${answer.id})}" method="post"><textarea class="form-control mb-2" name="body" rows="4" maxlength="10000" required th:text="${answer.body}"></textarea><button class="btn btn-primary btn-sm" type="submit">Lưu thay đổi</button><small th:if="${isAdvisor}" class="form-text ms-2">Câu trả lời sẽ được Manager duyệt lại.</small></form></details>
           <div th:if="${answer.reviewReason != null}" class="review-note"><i class="bi bi-info-circle me-1"></i><strong th:text="${answer.approvalStatus.name() == 'APPROVED' ? 'Lý do duyệt: ' : 'Lý do từ chối: '}">Lý do:</strong><span th:text="${answer.reviewReason}"></span></div>
         </div>
         <div th:if="${canAnswerQuestion}" class="reply-compose">
@@ -47,6 +53,7 @@
           </div>
         </section>
         <section th:if="${isStudent}" class="side-card"><div class="side-card-title"><i class="bi bi-bell me-2"></i>THEO DÕI TRẢ LỜI</div><p class="form-hint mb-0" th:text="${question.replyNotification ? 'Đã có phản hồi được gửi đến bạn.' : 'Khi tư vấn viên phản hồi, trạng thái thông báo sẽ cập nhật tại đây.'}">Thông tin thông báo</p></section>
+        <section th:if="${canReportQuestion}" class="side-card"><div class="side-card-title"><i class="bi bi-flag me-2"></i>BÁO CÁO CÂU HỎI</div><p class="form-hint">Báo cáo nội dung sai phạm để Manager khoa xem xét.</p><form th:action="@{/questions/{id}/report(id=${question.id})}" method="post"><textarea class="form-control mb-2" name="reason" rows="3" maxlength="2000" required placeholder="Nêu rõ lý do báo cáo"></textarea><button class="btn btn-outline-danger btn-sm" type="submit">Gửi báo cáo</button></form></section>
         <section class="side-card"><div class="side-card-title"><i class="bi bi-lightning-charge me-2"></i>THÔNG BÁO TRỰC TIẾP</div><p class="form-hint mb-0">Trang này nhận thông báo WebSocket khi có câu trả lời hoặc kết quả duyệt mới.</p></section>
       </aside>
     </div>

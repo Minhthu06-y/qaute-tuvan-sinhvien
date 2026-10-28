@@ -46,28 +46,33 @@ public class ApiController {
         if (isManager(authentication)) {
             var allowed = scope.managerDepartments(user.getEmail());
             result = questions.findAllByOrderByCreatedAtDesc().stream()
+                    .filter(question -> !question.isDeleted())
                     .filter(question -> ScopeService.allows(allowed, question.getDepartment())).toList();
         } else if (user.getRole() == Role.ADMIN) {
-            result = questions.findAllByOrderByCreatedAtDesc();
+            result = questions.findAllByOrderByCreatedAtDesc().stream().filter(question -> !question.isDeleted()).toList();
         } else if (isAdvisor(authentication)) {
             result = user.getFaculty() == null ? List.of()
                     : questions.findByFacultyIdOrderByCreatedAtDesc(user.getFaculty().getId()).stream()
+                            .filter(question -> !question.isDeleted())
                             .filter(question -> user.isAssignedTo(question.getTopic())).toList();
         } else {
-            result = questions.findByAskerIdOrderByCreatedAtDesc(user.getId());
+            result = questions.findByAskerIdOrderByCreatedAtDesc(user.getId()).stream()
+                    .filter(question -> !question.isDeleted()).toList();
         }
         return result.stream().map(this::toDto).toList();
     }
 
     @GetMapping("/questions/{id}") public QuestionDto get(@PathVariable Long id, Authentication authentication) {
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanView(question, authentication);
         return toDto(question);
     }
 
     @PostMapping("/questions/{id}/answers") public AnswerDto reply(@PathVariable Long id, @RequestBody AnswerRequest request, Authentication authentication) {
         User author = currentUser(authentication);
-        Question question = questions.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ensureCanManage(question, authentication, author);
         if (question.isLocked() && !isManager(authentication)) throw new ResponseStatusException(HttpStatus.CONFLICT, "Question is locked after transfer");
         if (request.body() == null || request.body().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Answer body is required");
@@ -101,6 +106,7 @@ public class ApiController {
     }
     private boolean isManager(Authentication auth) { return hasAuthority(auth, "ROLE_MANAGER"); }
     private void ensureCanView(Question q, Authentication auth) {
+        if (q.isDeleted()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         User user = currentUser(auth);
         if (user.getRole() == Role.ADMIN) {
             return;

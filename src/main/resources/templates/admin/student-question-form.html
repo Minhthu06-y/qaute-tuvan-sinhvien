@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Thêm câu hỏi')}"></head>
+<body class="admin-body"><div class="admin-shell"><aside th:replace="~{admin/layout :: sidebar('questions')}"></aside><div class="admin-main"><header th:replace="~{admin/layout :: topbar}"></header>
+<main class="admin-content"><div th:replace="~{admin/layout :: alerts}"></div>
+  <div class="admin-page-heading"><div><div class="admin-kicker">Quản lý nội dung</div><h1>Thêm câu hỏi</h1><p>Tạo câu hỏi gắn với tài khoản người dùng, khoa và chuyên đề.</p></div><a class="btn btn-light btn-sm" th:href="@{/admin/student-questions}">Quay lại</a></div>
+  <section class="admin-card"><div class="admin-card-body"><form th:action="@{/admin/student-questions/new}" th:object="${form}" method="post">
+    <div class="text-danger mb-3" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi</p></div>
+    <div class="mb-3"><label class="form-label" for="askerId">Tài khoản người hỏi</label><select id="askerId" class="form-select" th:field="*{askerId}" required><option value="">Chọn người dùng</option><option th:each="user : ${users}" th:value="${user.id}" th:text="${user.fullName + ' · ' + user.email}">Sinh viên</option></select><div class="text-danger small" th:errors="*{askerId}"></div></div>
+    <div class="mb-3"><label class="form-label" for="facultyId">Khoa</label><select id="facultyId" class="form-select" th:field="*{facultyId}" required><option value="">Chọn khoa</option><option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:text="${faculty.name}">Khoa</option></select><div class="text-danger small" th:errors="*{facultyId}"></div></div>
+    <div class="mb-3"><label class="form-label" for="topicId">Chuyên đề</label><select id="topicId" class="form-select" th:field="*{topicId}" required><option value="">Chọn chuyên đề</option><option th:each="topic : ${topics}" th:value="${topic.id}" th:attr="data-faculty-id=${topic.faculty.id}" th:text="${topic.name}">Chuyên đề</option></select><div class="text-danger small" th:errors="*{topicId}"></div></div>
+    <div class="mb-3"><label class="form-label" for="subject">Tiêu đề</label><input id="subject" class="form-control" th:field="*{subject}" maxlength="240" required><div class="text-danger small" th:errors="*{subject}"></div></div>
+    <div class="mb-3"><label class="form-label" for="body">Nội dung</label><textarea id="body" class="form-control" th:field="*{body}" rows="6" maxlength="10000" required></textarea><div class="text-danger small" th:errors="*{body}"></div></div>
+    <div class="form-check mb-3"><input id="publicQuestion" class="form-check-input" type="checkbox" th:field="*{publicQuestion}"><label class="form-check-label" for="publicQuestion">Cho phép hiển thị trong câu hỏi công khai</label></div>
+    <button class="btn btn-primary btn-sm" type="submit">Thêm câu hỏi</button>
+  </form></div></section>
+</main></div></div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+ const faculty=document.getElementById('facultyId'), topic=document.getElementById('topicId');
+ const sync=()=>{[...topic.options].forEach((o,i)=>{if(!i)return;const ok=o.dataset.facultyId===faculty.value;o.hidden=!ok;if(!ok&&o.selected)o.selected=false;});};
+ faculty.addEventListener('change',sync); sync();
+});
+</script>
+</body></html>

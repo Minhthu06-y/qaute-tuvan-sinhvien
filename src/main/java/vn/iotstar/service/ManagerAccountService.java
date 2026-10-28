@@ -2,6 +2,8 @@ package vn.iotstar.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,30 @@ public class ManagerAccountService {
 
     public List<User> list() {
         return users.findByRole(Role.MANAGER).stream().filter(user -> !user.isDeleted()).toList();
+    }
+
+    public java.util.Map<Long, Set<Long>> departmentAssignments() {
+        return list().stream().collect(Collectors.toMap(User::getId,
+                user -> user.getManagedDepartments().stream().map(department -> department.getId())
+                        .collect(Collectors.toSet())));
+    }
+
+    @Transactional
+    public void updateDepartments(Long managerId, List<Long> departmentIds, String actor) {
+        User manager = users.findById(managerId)
+                .filter(user -> user.getRole() == Role.MANAGER && !user.isDeleted())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy manager"));
+        Set<Long> selectedIds = departmentIds == null ? Set.of() : Set.copyOf(departmentIds);
+        var selected = departments.findAllById(selectedIds);
+        if (selected.size() != selectedIds.size())
+            throw new IllegalArgumentException("Một hoặc nhiều khoa không tồn tại");
+        manager.setManagedDepartments(new HashSet<>(selected));
+        manager.setFaculty(faculties.findAll().stream()
+                .filter(faculty -> selected.stream().anyMatch(department ->
+                        faculty.getName().trim().equalsIgnoreCase(department.getName().trim())))
+                .findFirst().orElse(null));
+        users.save(manager);
+        logs.log(actor, "ADMIN", "ASSIGN_MANAGER_DEPARTMENTS", manager.getEmail());
     }
 
     @Transactional

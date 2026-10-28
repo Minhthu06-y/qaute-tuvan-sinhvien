@@ -29,6 +29,7 @@ public class HomeController {
         List<Question> publicQuestions = selectedFaculty == null
                 ? questions.findByIsPublicTrueOrderByCreatedAtDesc()
                 : questions.findByFacultyIdAndIsPublicTrueOrderByCreatedAtDesc(selectedFaculty.getId());
+        publicQuestions = publicQuestions.stream().filter(question -> !question.isDeleted()).toList();
         model.addAttribute("faculties", allFaculties);
         model.addAttribute("selectedFaculty", selectedFaculty);
         model.addAttribute("publicQuestions", publicQuestions);

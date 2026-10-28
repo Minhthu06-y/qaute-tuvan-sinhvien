@@ -25,6 +25,7 @@ public class AdminManagerController {
     public String page(Model m) {
         if (!m.containsAttribute("form")) m.addAttribute("form", new ManagerForm());
         m.addAttribute("managers", service.list());
+        m.addAttribute("managerDepartmentIds", service.departmentAssignments());
         m.addAttribute("departments", departments.findAll());
         return "admin/managers";
     }
@@ -47,6 +48,15 @@ public class AdminManagerController {
     public String toggle(@PathVariable Long id, Principal p, RedirectAttributes ra) {
         boolean on = service.toggleEnabled(id, p.getName());
         ra.addFlashAttribute("msg", on ? "Đã mở khoá tài khoản" : "Đã khoá tài khoản");
+        return "redirect:/admin/managers";
+    }
+
+    @PostMapping("/{id}/departments")
+    public String assignDepartments(@PathVariable Long id,
+            @RequestParam(required = false) java.util.List<Long> departmentIds,
+            Principal p, RedirectAttributes ra) {
+        service.updateDepartments(id, departmentIds, p.getName());
+        ra.addFlashAttribute("msg", "Đã cập nhật khoa phụ trách của Manager");
         return "redirect:/admin/managers";
     }
 }

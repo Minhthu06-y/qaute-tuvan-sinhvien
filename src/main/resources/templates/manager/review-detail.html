@@ -22,7 +22,7 @@
           <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-check2-circle me-1"></i>Lưu quyết định</button>
         </form>
       </div></section>
-      <section class="admin-card"><div class="admin-card-head"><div><h2>Lịch sử trao đổi và duyệt</h2><p th:text="${thread.size()} + ' câu trả lời · ' + ${history.size()} + ' quyết định'"></p></div></div><div class="admin-card-body">
+      <section class="admin-card"><div class="admin-card-head"><div><h2>Lịch sử trao đổi và duyệt</h2><p th:text="${thread.size() + ' câu trả lời · ' + history.size() + ' quyết định'}"></p></div></div><div class="admin-card-body">
         <article class="admin-answer-card" th:each="item : ${thread}"><div class="d-flex justify-content-between gap-2"><strong class="admin-primary-text" th:text="${item.advisor != null ? item.advisor.fullName : (item.author != null ? item.author.fullName : 'Tư vấn viên')}">Tư vấn viên</strong><small class="admin-secondary-text" th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</small></div><p th:text="${item.content}">Nội dung trả lời</p><span class="admin-status" th:text="${item.approvalStatus}">PENDING</span></article>
         <article class="admin-answer-card" th:each="item : ${history}"><div class="d-flex justify-content-between gap-2"><strong class="admin-primary-text" th:text="${item.manager.fullName}">Trưởng ban cố vấn</strong><small class="admin-secondary-text" th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</small></div><p th:text="${item.reason}">Lý do duyệt</p><p th:if="${item.betterAnswer != null}" th:text="${item.betterAnswer}">Câu trả lời đề xuất</p></article>
       </div></section>
