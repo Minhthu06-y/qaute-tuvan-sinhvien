@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trang chủ | QAUTE</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <link rel="stylesheet" th:href="@{/css/theme.css}">
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+</head>
+<body class="home-page">
+  <header class="home-header">
+    <a class="home-brand" th:href="@{/}" aria-label="QAUTE - Trang chủ"><span>Q</span><span>QAUTE<small>TƯ VẤN SINH VIÊN</small></span></a>
+    <nav class="home-actions" aria-label="Tài khoản">
+      <a class="btn btn-outline-primary" th:href="@{/login}">Đăng nhập</a>
+      <a class="btn btn-primary" th:href="@{/register}">Đăng ký</a>
+    </nav>
+  </header>
+
+  <main class="home-main">
+    <section class="home-heading">
+      <p class="home-eyebrow">HỖ TRỢ SINH VIÊN HCMUTE</p>
+      <h1>Câu hỏi tư vấn</h1>
+      <p>Danh sách câu hỏi đã được chia sẻ công khai.</p>
+    </section>
+
+    <div class="home-layout">
+      <aside class="home-faculty-bar" aria-label="Lọc theo khoa và đơn vị">
+        <h2><i class="bi bi-diagram-3 me-2"></i>Khoa & đơn vị tư vấn</h2>
+        <nav class="home-faculty-nav">
+          <a class="home-faculty-link" th:classappend="${selectedFaculty == null ? 'active' : ''}" th:href="@{/}"><i class="bi bi-grid"></i><span>Tất cả câu hỏi</span></a>
+          <a class="home-faculty-link" th:each="faculty : ${faculties}" th:classappend="${selectedFaculty != null && selectedFaculty.id == faculty.id ? 'active' : ''}" th:href="@{/(facultyId=${faculty.id})}"><i class="bi bi-building"></i><span th:text="${faculty.name}">Khoa / đơn vị</span></a>
+        </nav>
+      </aside>
+
+      <section class="home-list panel" aria-label="Danh sách câu hỏi công khai">
+        <div class="panel-head">
+          <div><h2 class="panel-title"><i class="bi bi-chat-square-text"></i><span th:text="${selectedFaculty == null ? 'Câu hỏi công khai' : selectedFaculty.name}">Câu hỏi công khai</span></h2><div class="panel-subtitle">Nội dung được tư vấn viên chọn chia sẻ</div></div>
+          <span class="count-badge" th:text="${publicQuestions.size()} + ' câu hỏi'">0 câu hỏi</span>
+        </div>
+        <div th:if="${#lists.isEmpty(publicQuestions)}" class="empty-state">
+          <i class="bi bi-journal-text"></i><strong>Chưa có câu hỏi công khai</strong>
+          <p th:text="${selectedFaculty == null ? 'Các câu hỏi hữu ích sẽ xuất hiện ở đây sau khi được chia sẻ.' : 'Đơn vị này chưa có câu hỏi được chia sẻ công khai.'}">Chưa có nội dung.</p>
+        </div>
+        <ul th:unless="${#lists.isEmpty(publicQuestions)}" class="question-list">
+          <li class="question-row home-question-row" th:each="question : ${publicQuestions}">
+            <div class="home-question-main">
+              <h2 class="question-title"><a class="text-decoration-none" th:href="@{/questions/{id}(id=${question.id})}" th:text="${question.displaySubject}">Tiêu đề câu hỏi</a></h2>
+              <p class="question-preview home-question-preview" th:text="${question.body}">Nội dung câu hỏi</p>
+              <div class="row-meta">
+                <span class="status-badge status-answered" th:if="${question.status.name() == 'ANSWERED'}"><i class="bi bi-check-circle-fill"></i>Đã trả lời</span>
+                <span class="status-badge status-open" th:unless="${question.status.name() == 'ANSWERED'}"><i class="bi bi-three-dots"></i>Chưa trả lời</span>
+                <span class="status-badge visibility-badge" th:text="${question.topic != null ? question.topic.name : question.faculty.shortName}">Chuyên đề</span>
+              </div>
+            </div>
+            <div class="date-cell"><strong th:text="${#temporals.format(question.createdAt, 'dd/MM/yyyy')}">18/10/2026</strong><span th:text="${#temporals.format(question.createdAt, 'HH:mm')}">08:45</span></div>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="home-footer">QAUTE · Hệ thống tư vấn và hỗ trợ sinh viên</footer>
+</body>
+</html>

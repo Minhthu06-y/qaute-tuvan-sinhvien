@@ -1,0 +1,21 @@
+/* Keep the shared navigation readable while Bootstrap's offcanvas is open. */
+.side-panel.offcanvas-lg {
+  background-color: #075487 !important;
+  color: #fff !important;
+}
+
+.side-panel .side-identity {
+  background-color: #063f68 !important;
+  color: #fff;
+}
+
+.side-panel .side-link,
+.side-panel .side-link:visited {
+  color: #edf7ff !important;
+}
+
+.side-panel .side-link:hover,
+.side-panel .side-link.active {
+  background-color: #ffffff20 !important;
+  color: #fff !important;
+}

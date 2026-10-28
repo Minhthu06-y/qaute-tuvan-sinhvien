@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Duyệt câu trả lời')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('reviews')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading">
+        <div><div class="admin-kicker">Trưởng ban cố vấn</div><h1>Duyệt câu trả lời</h1><p>Xem và duyệt phản hồi từ tư vấn viên trên toàn hệ thống.</p></div>
+        <a class="btn btn-outline-primary btn-sm" th:href="@{/manager/questions}"><i class="bi bi-chat-left-text me-1"></i>Tất cả câu hỏi</a>
+      </div>
+      <nav class="admin-tabs">
+        <a th:href="@{/manager/reviews(status='PENDING')}" th:classappend="${status.name() == 'PENDING' ? 'active' : ''}">Chờ duyệt</a>
+        <a th:href="@{/manager/reviews(status='APPROVED')}" th:classappend="${status.name() == 'APPROVED' ? 'active' : ''}">Đã duyệt</a>
+        <a th:href="@{/manager/reviews(status='REJECTED')}" th:classappend="${status.name() == 'REJECTED' ? 'active' : ''}">Đã từ chối</a>
+      </nav>
+      <section class="admin-card">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Câu hỏi</th><th>Chuyên đề / khoa</th><th>Tư vấn viên</th><th>Ngày trả lời</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+              <tr th:each="answer : ${answers}">
+                <td><a class="admin-primary-text text-decoration-none" th:href="@{/manager/reviews/{id}(id=${answer.id})}" th:text="${answer.question.displaySubject}">Câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(answer.displayBody, 100)}">Nội dung trả lời</small></td>
+                <td><span th:text="${answer.question.category != null ? answer.question.category : 'Chưa phân chuyên đề'}">Chuyên đề</span><small class="admin-secondary-text" th:text="${answer.question.department != null ? answer.question.department.name : 'Chưa phân khoa'}">Khoa</small></td>
+                <td th:text="${answer.advisor != null ? answer.advisor.fullName : (answer.author != null ? answer.author.fullName : 'Tư vấn viên')}">Tư vấn viên</td>
+                <td th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</td>
+                <td><span class="admin-status" th:classappend="${answer.approvalStatus.name() == 'PENDING' ? 'pending' : (answer.approvalStatus.name() == 'REJECTED' ? 'inactive' : '')}" th:text="${answer.approvalStatus.name() == 'PENDING' ? 'Chờ duyệt' : (answer.approvalStatus.name() == 'REJECTED' ? 'Đã từ chối' : 'Đã duyệt')}">Chờ duyệt</span></td>
+                <td><a class="admin-icon-button" th:href="@{/manager/reviews/{id}(id=${answer.id})}" title="Xem và xử lý"><i class="bi bi-arrow-up-right"></i></a></td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(answers)}"><td colspan="6" class="admin-empty"><i class="bi bi-inbox"></i>Không có câu trả lời trong trạng thái này.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)" th:replace="~{fragments :: head(${title})}"></head>
+<body>
+<th:block th:fragment="sidebar(active)" th:replace="~{fragments :: sidebar(${active})}"></th:block>
+<th:block th:fragment="topbar" th:replace="~{fragments :: topbar}"></th:block>
+<div th:fragment="alerts" class="flash-stack">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div th:if="${msg}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i><span th:text="${msg}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+  </div>
+  <div th:if="${err}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle me-2"></i><span th:text="${err}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+  </div>
+</div>
+</body>
+</html>

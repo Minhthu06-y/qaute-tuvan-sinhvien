@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Tổng quan')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('dashboard')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading">
+        <div>
+          <div class="admin-kicker" th:text="${base == '/manager' ? 'Xin chào, Trưởng ban cố vấn' : 'Xin chào, Quản trị viên'}">Xin chào</div>
+          <h1>Tổng quan hệ thống</h1>
+          <p>Theo dõi câu hỏi, phản hồi và hoạt động tư vấn sinh viên.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="btn btn-outline-primary btn-sm" th:href="@{${base + '/dashboard'}(period='week')}" th:classappend="${stats.period == 'week' ? 'active' : ''}">Tuần này</a>
+          <a class="btn btn-outline-primary btn-sm" th:href="@{${base + '/dashboard'}(period='month')}" th:classappend="${stats.period == 'month' ? 'active' : ''}">Tháng này</a>
+        </div>
+      </div>
+
+      <div class="admin-stats">
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-chat-square-text"></i></span><span><strong th:text="${stats.totalQuestions}">0</strong><small>Câu hỏi mới</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-check2-circle"></i></span><span><strong th:text="${stats.answered}">0</strong><small>Đã trả lời</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hourglass-split"></i></span><span><strong th:text="${stats.unanswered}">0</strong><small>Chưa trả lời</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-inbox"></i></span><span><strong th:text="${stats.pendingApproval}">0</strong><small>Chờ duyệt</small></span></div>
+      </div>
+
+      <div class="admin-stats">
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-up"></i></span><span><strong th:text="${stats.answerLikes}">0</strong><small>Like câu trả lời</small></span></div>
+        <div class="admin-stat"><span class="admin-stat-icon"><i class="bi bi-hand-thumbs-down"></i></span><span><strong th:text="${stats.answerDislikes}">0</strong><small>Dislike câu trả lời</small></span></div>
+      </div>
+
+      <section class="admin-card mb-3">
+        <div class="admin-card-head"><div><h2>Đánh giá câu trả lời theo khoa</h2><p>Lượt like và dislike câu trả lời của tư vấn viên, Manager và Admin trong khoảng thời gian đã chọn.</p></div></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Khoa / đơn vị</th><th>Like</th><th>Dislike</th></tr></thead><tbody>
+          <tr th:each="vote : ${stats.answerVotesByDepartment}"><td class="admin-primary-text" th:text="${vote.name}">Khoa</td><td th:text="${vote.likes}">0</td><td th:text="${vote.dislikes}">0</td></tr>
+          <tr th:if="${#lists.isEmpty(stats.answerVotesByDepartment)}"><td colspan="3" class="admin-empty">Chưa có đánh giá câu trả lời trong kỳ.</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div>
+            <h2>Hoạt động trong kỳ</h2>
+            <p><span th:text="${stats.fromLabel}">2026-10-12</span> – <span th:text="${stats.toLabel}">2026-10-18</span></p>
+          </div>
+          <div class="admin-legend">
+            <span><i></i>Câu hỏi</span>
+            <span><i class="answer-key"></i>Câu trả lời</span>
+          </div>
+        </div>
+        <div class="admin-card-body admin-chart-bars">
+          <div class="admin-chart-day" th:each="label, day : ${stats.labels}">
+            <!-- Khối Tooltip hiển thị khi rê chuột -->
+            <div class="admin-chart-tooltip">
+              <div class="tooltip-title" th:text="'Ngày ' + ${label}">Ngày 18/10</div>
+              <div class="tooltip-row q">
+                <span class="dot"></span> Câu hỏi: <strong th:text="${stats.questionSeries[day.index]}">0</strong>
+              </div>
+              <div class="tooltip-row a">
+                <span class="dot"></span> Câu trả lời: <strong th:text="${stats.answerSeries[day.index]}">0</strong>
+              </div>
+            </div>
+
+            <!-- Cột biểu đồ -->
+            <div class="admin-chart-pair">
+              <span class="admin-chart-bar" 
+                    th:title="${stats.questionSeries[day.index]} + ' câu hỏi'" 
+                    th:style="'height:' + ${T(java.lang.Math).max(3L, stats.questionSeries[day.index] * 105L / chartMax)} + 'px'"></span>
+              <span class="admin-chart-bar answer" 
+                    th:title="${stats.answerSeries[day.index]} + ' câu trả lời'" 
+                    th:style="'height:' + ${T(java.lang.Math).max(3L, stats.answerSeries[day.index] * 105L / chartMax)} + 'px'"></span>
+            </div>
+            <small th:text="${label}">18/10</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-xl-7">
+          <section class="admin-card h-100">
+            <div class="admin-card-head">
+              <div>
+                <h2>Câu hỏi theo đơn vị</h2>
+                <p>Thống kê trong khoảng thời gian đã chọn</p>
+              </div>
+              <a class="btn btn-light btn-sm" th:href="@{${base == '/manager' ? '/manager/questions' : '/admin/student-questions'}}">Mở danh sách</a>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Khoa / đơn vị</th><th>Tổng</th><th>Đã trả lời</th><th>Chưa trả lời</th></tr>
+                </thead>
+                <tbody>
+                  <tr th:each="dept : ${stats.byDepartment}">
+                    <td class="admin-primary-text" th:text="${dept.name}">Khoa Công nghệ thông tin</td>
+                    <td th:text="${dept.total}">0</td>
+                    <td th:text="${dept.answered}">0</td>
+                    <td th:text="${dept.unanswered}">0</td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(stats.byDepartment)}">
+                    <td colspan="4" class="admin-empty">Chưa có dữ liệu trong kỳ.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <div class="col-xl-5">
+          <section class="admin-card h-100">
+            <div class="admin-card-head">
+              <div>
+                <h2>Tư vấn viên hoạt động</h2>
+                <p>Số câu trả lời đã gửi trong kỳ</p>
+              </div>
+              <a class="btn btn-light btn-sm" th:href="@{${base == '/manager' ? '/manager/heads' : '/admin/advisors'}}">Đội ngũ</a>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Tư vấn viên</th><th>Email</th><th>Trả lời</th></tr>
+                </thead>
+                <tbody>
+                  <tr th:each="advisor : ${stats.topAdvisors}">
+                    <td class="admin-primary-text" th:text="${advisor.name}">Tên tư vấn viên</td>
+                    <td th:text="${advisor.email}">advisor@example.edu.vn</td>
+                    <td th:text="${advisor.answers}">0</td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(stats.topAdvisors)}">
+                    <td colspan="3" class="admin-empty">Chưa có câu trả lời trong kỳ.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

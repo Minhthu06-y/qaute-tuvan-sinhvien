@@ -1,0 +1,31 @@
+package vn.iotstar.dto;
+
+import vn.iotstar.enums.*;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import java.util.HashSet;
+import java.util.Set;
+
+@Data
+public class AdvisorForm {
+    @NotBlank(message = "Vui lòng nhập họ tên")
+    private String fullName;
+    @NotBlank(message = "Vui lòng nhập email")
+    @Email(message = "Email không hợp lệ")
+    private String email;
+    @NotBlank(message = "Vui lòng nhập số điện thoại")
+    @Pattern(regexp = "^(0|\\+84)\\d{9}$", message = "Số điện thoại không hợp lệ")
+    private String phone;
+    @NotNull(message = "Vui lòng chọn khoa")
+    private Long departmentId;
+    @NotNull(message = "Vui lòng chọn đối tượng")
+    private AdvisorType advisorType;
+    @NotNull(message = "Vui lòng chọn chuyên mục (đối tượng)")
+    private AudienceType audience;
+    @NotNull(message = "Vui lòng chọn trạng thái")
+    private AdvisorStatus status;
+    private Set<Long> topicIds = new HashSet<>();
+    private boolean head;
+}
+
