@@ -25,8 +25,15 @@ Hibernate `ddl-auto=update` không tự gộp dữ liệu hoặc xóa các bản
 
 Chạy ứng dụng bằng `mvn spring-boot:run`.
 
-## Local demo accounts
-
-When the application uses the default `local` profile, startup creates accounts for any department missing an active Manager assignment or Consultant. Existing active accounts are preserved. Emails follow `manager.dept<ID>@qaute.edu.vn` and `consultant.dept<ID>@qaute.edu.vn`; a `.seedN` suffix is used if an address is already taken. Consultants receive an advisor profile and the faculty's topics.
-
-The default demo password is `123456`; override it with `BOOTSTRAP_DEMO_ACCOUNT_PASSWORD`. The seeder runs only in the `local` profile. Set `SPRING_PROFILES_ACTIVE=prod` in production. Restart the application to create accounts for departments currently missing coverage.
+Tài khoản demo cục bộ (Local Demo Accounts)
+Khi ứng dụng sử dụng cấu hình mặc định local, hệ thống sẽ tự động tạo tài khoản cho những khoa chưa có Manager đang hoạt động hoặc Consultant được phân công.
+- Giữ nguyên tài khoản hiện có: Các tài khoản đang hoạt động sẽ được bảo toàn, không bị ghi đè.
+- Quy tắc đặt email:
+  - Manager: manager.dept<ID>@qaute.edu.vn
+  - Consultant: consultant.dept<ID>@qaute.edu.vn
+  - Nếu email đã tồn tại, hệ thống sẽ thêm hậu tố .seedN để tạo địa chỉ email khác.
+- Hồ sơ Consultant: Hệ thống tự động tạo hồ sơ cố vấn và gán các chủ đề tư vấn thuộc khoa tương ứng.
+- Mật khẩu demo mặc định: 123456. Có thể thay đổi mật khẩu bằng biến môi trường BOOTSTRAP_DEMO_ACCOUNT_PASSWORD.
+- Phạm vi hoạt động: Chức năng tạo tài khoản tự động chỉ chạy trong cấu hình local.
+- Môi trường production: Khi triển khai ứng dụng thực tế, cần đặt SPRING_PROFILES_ACTIVE=prod để sử dụng cấu hình sản xuất.
+- Tạo tài khoản bổ sung: Khởi động lại ứng dụng để hệ thống tạo tài khoản cho những khoa hiện chưa có đủ nhân sự phụ trách theo điều kiện trên.
