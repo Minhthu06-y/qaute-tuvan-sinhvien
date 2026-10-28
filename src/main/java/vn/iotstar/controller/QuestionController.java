@@ -214,9 +214,8 @@ public class QuestionController {
     @GetMapping("/questions/public") public String publicQuestions(@RequestParam(required = false) Long facultyId,
             @RequestParam(required = false) Long topicId, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
-        if (viewer == null) return "redirect:/login";
         Faculty selectedFaculty = null;
-        if (viewer.isStudent()) {
+        if (viewer == null || viewer.isStudent()) {
             selectedFaculty = facultyId == null ? null : faculties.findById(facultyId).orElse(null);
         } else if (viewer.role() == Role.ADMIN) {
             selectedFaculty = facultyId == null ? null : faculties.findById(facultyId).orElse(null);
@@ -233,7 +232,7 @@ public class QuestionController {
             selectedTopic = null;
         }
         List<Question> publicQuestions = selectedFaculty == null
-                ? viewer.isStudent() || viewer.role() == Role.ADMIN
+                ? viewer == null || viewer.isStudent() || viewer.role() == Role.ADMIN
                         ? questions.findByIsPublicTrueOrderByCreatedAtDesc() : List.of()
                 : questions.findByFacultyIdAndIsPublicTrueOrderByCreatedAtDesc(selectedFaculty.getId());
         publicQuestions = publicQuestions.stream().filter(question -> !question.isDeleted()).toList();
@@ -242,7 +241,7 @@ public class QuestionController {
             publicQuestions = publicQuestions.stream().filter(question -> question.getTopic() != null
                     && question.getTopic().getId().equals(selectedId)).toList();
         }
-        if (viewer.isAdvisor()) publicQuestions = publicQuestions.stream().filter(question -> canHandle(viewer, question)).toList();
+        if (viewer != null && viewer.isAdvisor()) publicQuestions = publicQuestions.stream().filter(question -> canHandle(viewer, question)).toList();
         model.addAttribute("publicQuestions", publicQuestions);
         model.addAttribute("publicFaculties", faculties.findAll());
         model.addAttribute("selectedFaculty", selectedFaculty);
@@ -263,29 +262,35 @@ public class QuestionController {
 
     @GetMapping("/questions/{id}") public String detail(@PathVariable Long id, HttpSession session, Model model) {
         SessionContext.Viewer viewer = sessionContext.viewer(session);
-        if (viewer == null) return "redirect:/login";
         Question question = questions.findById(id).filter(candidate -> !candidate.isDeleted())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        ensureCanView(viewer, question);
+        if (viewer == null) {
+            if (!question.isPublic()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } else {
+            ensureCanView(viewer, question);
+        }
         List<Answer> visibleAnswers = answers.findByQuestionIdOrderByCreatedAtAsc(id);
-        if (viewer.isStudent()) visibleAnswers = visibleAnswers.stream().filter(a -> a.getApprovalStatus() == ApprovalStatus.APPROVED || a.getApprovalStatus() == ApprovalStatus.NOT_REQUIRED).toList();
+        if (viewer == null || viewer.isStudent()) visibleAnswers = visibleAnswers.stream().filter(a -> a.getApprovalStatus() == ApprovalStatus.APPROVED || a.getApprovalStatus() == ApprovalStatus.NOT_REQUIRED).toList();
         model.addAttribute("question", question); model.addAttribute("answers", visibleAnswers);
-        model.addAttribute("hideAskerIdentity", viewer.isStudent() && !question.getAsker().getId().equals(viewer.user().getId()));
+        model.addAttribute("hideAskerIdentity", viewer == null || (viewer.isStudent() && !question.getAsker().getId().equals(viewer.user().getId())));
         model.addAttribute("faculties", faculties.findAll());
         model.addAttribute("topics", topics.findAllByOrderByFacultyIdAscIdAsc());
-        boolean managerScope = viewer.isManager() && managerCanAccess(viewer, question);
-        boolean canManage = managerScope || (viewer.isAdvisor() && canHandle(viewer, question));
+        boolean managerScope = viewer != null && viewer.isManager() && managerCanAccess(viewer, question);
+        boolean canManage = managerScope || (viewer != null && viewer.isAdvisor() && canHandle(viewer, question));
         model.addAttribute("canManageQuestion", canManage && !question.isLocked());
-        model.addAttribute("canAnswerQuestion", managerScope || (!question.isLocked()
+        boolean canAnswer = viewer != null && (managerScope || (!question.isLocked()
                 && (viewer.role() == Role.ADMIN || (viewer.isAdvisor() && canHandle(viewer, question)))));
-        model.addAttribute("canReportQuestion", viewer.isAdvisor() && canHandle(viewer, question));
+        model.addAttribute("canAnswerQuestion", canAnswer);
+        model.addAttribute("canReportQuestion", viewer != null && viewer.isAdvisor() && canHandle(viewer, question));
         Map<Long, VoteSummary> voteSummaries = new HashMap<>();
         Set<Long> editableAnswerIds = new HashSet<>();
-        for (Answer answer : visibleAnswers) {
-            voteSummaries.put(answer.getId(), answerVotes.summary(answer.getId(), viewer.user().getId()));
-            if (answer.getAuthor().getId().equals(viewer.user().getId())
-                    && ((viewer.isAdvisor() && canHandle(viewer, question)) || managerScope))
-                editableAnswerIds.add(answer.getId());
+        if (viewer != null) {
+            for (Answer answer : visibleAnswers) {
+                voteSummaries.put(answer.getId(), answerVotes.summary(answer.getId(), viewer.user().getId()));
+                if (answer.getAuthor().getId().equals(viewer.user().getId())
+                        && ((viewer.isAdvisor() && canHandle(viewer, question)) || managerScope))
+                    editableAnswerIds.add(answer.getId());
+            }
         }
         model.addAttribute("voteSummaries", voteSummaries);
         model.addAttribute("editableAnswerIds", editableAnswerIds);

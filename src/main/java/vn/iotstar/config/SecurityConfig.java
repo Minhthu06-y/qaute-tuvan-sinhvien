@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/presence/**").hasRole("CONSULTANT")
                         .requestMatchers("/questions/new").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/questions").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/questions/public", "/questions/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/questions/*/answers", "/questions/*/visibility",
                                 "/questions/*/transfer")
                         .hasAnyRole("CONSULTANT", "MANAGER")

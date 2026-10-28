@@ -2,21 +2,22 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Chi tiết câu hỏi')}"></head>
 <body>
-<header th:replace="~{fragments :: topbar}"></header>
-<aside th:replace="~{fragments :: sidebar('questions')}"></aside>
+<th:block th:if="${currentUser != null}"><header th:replace="~{fragments :: topbar}"></header><aside th:replace="~{fragments :: sidebar('questions')}"></aside></th:block>
+<header th:if="${currentUser == null}" class="topbar"><a class="brand-mark" th:href="@{/}">Q</a><div class="topbar-title">QAUTE <small>HỆ THỐNG TƯ VẤN SINH VIÊN</small></div><div class="topbar-actions"><a class="btn btn-outline-light btn-sm" th:href="@{/login}">Đăng nhập</a><a class="btn btn-light btn-sm" th:href="@{/register}">Đăng ký</a></div></header>
 <div class="page-shell">
   <main class="page-content">
     <div th:replace="~{fragments :: alerts}"></div>
     <div class="page-heading">
-      <div><div class="eyebrow">Hộp thư tư vấn · <span th:text="${question.faculty.shortName}">CNTT</span></div><h1>Trao đổi câu hỏi</h1><p class="heading-caption">Thông tin người hỏi, chuyên đề và các phản hồi của tư vấn viên.</p></div>
-      <div class="heading-actions"><a class="btn btn-outline-primary btn-sm" th:href="@{/questions}"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a></div>
+      <div><div class="eyebrow" th:text="${(question.isPublic() ? 'Câu hỏi công khai · ' : 'Hộp thư tư vấn · ') + question.faculty.shortName}">Câu hỏi công khai · CNTT</div><h1>Trao đổi câu hỏi</h1><p class="heading-caption">Thông tin câu hỏi, chuyên đề và các phản hồi đã được duyệt.</p></div>
+      <div class="heading-actions"><a class="btn btn-outline-primary btn-sm" th:href="${currentUser == null ? '/' : '/questions'}"><i class="bi bi-arrow-left me-1"></i><span th:text="${currentUser == null ? 'Về trang chủ' : 'Về hộp câu hỏi'}">Về hộp câu hỏi</span></a></div>
     </div>
     <div class="detail-grid">
       <section class="mail-card">
-        <div class="mail-toolbar"><ol class="breadcrumb"><li class="breadcrumb-item"><a th:href="@{/questions}">Hộp câu hỏi</a></li><li class="breadcrumb-item active">Chi tiết</li></ol><span class="status-badge" th:classappend="${question.locked ? 'status-locked' : (question.status.name() == 'ANSWERED' ? 'status-answered' : 'status-open')}" th:text="${question.locked ? (isManager ? 'Đã chuyển · có thể trả lời' : 'Đã khóa') : (question.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời')}">Chưa trả lời</span></div>
+        <div class="mail-toolbar"><ol class="breadcrumb"><li class="breadcrumb-item"><a th:href="${currentUser == null ? '/' : '/questions'}" th:text="${currentUser == null ? 'Câu hỏi công khai' : 'Hộp câu hỏi'}">Câu hỏi công khai</a></li><li class="breadcrumb-item active">Chi tiết</li></ol><span class="status-badge" th:classappend="${question.locked ? 'status-locked' : (question.status.name() == 'ANSWERED' ? 'status-answered' : 'status-open')}" th:text="${question.locked ? (isManager ? 'Đã chuyển · có thể trả lời' : 'Đã khóa') : (question.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời')}">Chưa trả lời</span></div>
         <div class="mail-subject" th:text="${question.displaySubject}">Tiêu đề câu hỏi của sinh viên</div>
         <div class="mail-meta"><span class="mini-avatar" th:text="${hideAskerIdentity ? 'S' : #strings.substring(question.asker.displayName,0,1)}">L</span><div class="mail-meta-main"><span th:text="${hideAskerIdentity ? 'Sinh viên' : question.asker.displayName}">Lê Hoàng Nam</span><small th:unless="${hideAskerIdentity}" th:text="${question.asker.email}">sinhvien@qaute.edu.vn</small></div><div class="mail-time"><span th:text="${#temporals.format(question.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 08:45</span><small class="d-block mt-1">Người hỏi · <span th:text="${question.faculty.name}">Khoa CNTT</span></small></div></div>
         <div class="mail-body" th:text="${question.body}">Nội dung chi tiết của câu hỏi.</div>
+        <div th:if="${currentUser == null}" class="alert alert-info mt-3 mb-0">Bạn đang xem ở chế độ chỉ đọc. <a th:href="@{/login}">Đăng nhập</a> để sử dụng các tính năng tư vấn.</div>
         <div th:if="${question.attachmentUrl != null}" class="mail-attachment"><i class="bi bi-paperclip me-2"></i><a th:href="${question.attachmentUrl}" target="_blank">Xem tệp đính kèm</a></div>
         <div class="thread-separator"><i class="bi bi-chat-left-text me-2"></i>PHẢN HỒI <span class="text-muted fw-normal" th:text="'(' + ${answers.size()} + ' tư vấn viên)'">(0 tư vấn viên)</span></div>
         <div th:if="${#lists.isEmpty(answers)}" class="empty-state"><i class="bi bi-reply"></i><strong>Chưa có phản hồi</strong><p>Tư vấn viên trong đội ngũ có thể gửi câu trả lời tại đây.</p></div>
@@ -54,12 +55,12 @@
         </section>
         <section th:if="${isStudent}" class="side-card"><div class="side-card-title"><i class="bi bi-bell me-2"></i>THEO DÕI TRẢ LỜI</div><p class="form-hint mb-0" th:text="${question.replyNotification ? 'Đã có phản hồi được gửi đến bạn.' : 'Khi tư vấn viên phản hồi, trạng thái thông báo sẽ cập nhật tại đây.'}">Thông tin thông báo</p></section>
         <section th:if="${canReportQuestion}" class="side-card"><div class="side-card-title"><i class="bi bi-flag me-2"></i>BÁO CÁO CÂU HỎI</div><p class="form-hint">Báo cáo nội dung sai phạm để Manager khoa xem xét.</p><form th:action="@{/questions/{id}/report(id=${question.id})}" method="post"><textarea class="form-control mb-2" name="reason" rows="3" maxlength="2000" required placeholder="Nêu rõ lý do báo cáo"></textarea><button class="btn btn-outline-danger btn-sm" type="submit">Gửi báo cáo</button></form></section>
-        <section class="side-card"><div class="side-card-title"><i class="bi bi-lightning-charge me-2"></i>THÔNG BÁO TRỰC TIẾP</div><p class="form-hint mb-0">Trang này nhận thông báo WebSocket khi có câu trả lời hoặc kết quả duyệt mới.</p></section>
+        <section th:if="${currentUser != null}" class="side-card"><div class="side-card-title"><i class="bi bi-lightning-charge me-2"></i>THÔNG BÁO TRỰC TIẾP</div><p class="form-hint mb-0">Trang này nhận thông báo WebSocket khi có câu trả lời hoặc kết quả duyệt mới.</p></section>
       </aside>
     </div>
   </main>
-  <div th:replace="~{fragments :: footer}"></div>
+  <div th:if="${currentUser != null}" th:replace="~{fragments :: footer}"></div>
 </div>
-<div th:replace="~{fragments :: scripts}"></div>
+<div th:if="${currentUser != null}" th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

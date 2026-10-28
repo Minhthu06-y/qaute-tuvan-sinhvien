@@ -47,7 +47,7 @@
         <ul th:unless="${#lists.isEmpty(publicQuestions)}" class="question-list">
           <li class="question-row home-question-row" th:each="question : ${publicQuestions}">
             <div class="home-question-main">
-              <h2 class="question-title" th:text="${question.displaySubject}">Tiêu đề câu hỏi</h2>
+              <h2 class="question-title"><a class="text-decoration-none" th:href="@{/questions/{id}(id=${question.id})}" th:text="${question.displaySubject}">Tiêu đề câu hỏi</a></h2>
               <p class="question-preview home-question-preview" th:text="${question.body}">Nội dung câu hỏi</p>
               <div class="row-meta">
                 <span class="status-badge status-answered" th:if="${question.status.name() == 'ANSWERED'}"><i class="bi bi-check-circle-fill"></i>Đã trả lời</span>
