@@ -7,9 +7,9 @@
     <div th:if="${#lists.isEmpty(pendingAnswers)}" class="empty-state"><i class="bi bi-check2-circle"></i><strong>Không có yêu cầu cần duyệt</strong><p>Các câu trả lời tư vấn viên gửi xin duyệt sẽ xuất hiện ở đây.</p></div>
     <div th:each="answer : ${pendingAnswers}" class="approval-card">
       <div class="d-flex align-items-start gap-2"><span class="status-badge status-pending">Chờ duyệt</span><span class="text-muted ms-auto" style="font-size:10px" th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026</span></div>
-      <a class="approval-question d-block mt-3" th:href="@{/questions/{id}(id=${answer.question.id})}" th:text="${answer.question.subject}">Câu hỏi của sinh viên</a>
+      <a class="approval-question d-block mt-3" th:href="@{/questions/{id}(id=${answer.question.id})}" th:text="${answer.question.displaySubject}">Câu hỏi của sinh viên</a>
       <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:10px;color:#74869a"><span><i class="bi bi-person me-1"></i><span th:text="${answer.question.asker.displayName}">Người hỏi</span></span><span><i class="bi bi-chat-square-text me-1"></i><span th:text="${answer.author.displayName}">Người trả lời</span></span><span><i class="bi bi-building me-1"></i><span th:text="${answer.question.faculty.name}">Khoa</span></span></div>
-      <div class="approval-answer" th:text="${answer.body}">Nội dung câu trả lời</div>
+      <div class="approval-answer" th:text="${answer.displayBody}">Nội dung câu trả lời</div>
       <form th:action="@{/manager/answers/{id}/review(id=${answer.id})}" method="post" class="row g-2 align-items-end"><div class="col-md-8"><label class="form-label" th:for="'reason-' + ${answer.id}">Lý do duyệt / từ chối <span class="text-danger">*</span></label><textarea class="form-control" rows="2" name="reason" th:id="'reason-' + ${answer.id}" required placeholder="Giải thích ngắn gọn để tư vấn viên và sinh viên hiểu quyết định..."></textarea></div><div class="col-md-4 d-flex gap-2"><button class="btn btn-primary btn-sm flex-fill" name="approved" value="true" type="submit"><i class="bi bi-check-lg me-1"></i>Duyệt</button><button class="btn btn-outline-danger btn-sm flex-fill" name="approved" value="false" type="submit"><i class="bi bi-x-lg me-1"></i>Từ chối</button></div></form>
     </div>
   </section>

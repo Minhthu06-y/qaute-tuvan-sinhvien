@@ -32,7 +32,7 @@
             <i th:class="${q.status.name() == 'ANSWERED' ? 'bi bi-check-lg' : 'bi bi-three-dots'}"></i>
           </span>
           <div class="student-question-content">
-            <a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Tiêu đề câu hỏi</a>
+            <a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.displaySubject}">Tiêu đề câu hỏi</a>
             <div class="student-question-meta">
               <span th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span>
               <span th:if="${q.topic != null}">·</span>
@@ -40,6 +40,21 @@
             </div>
           </div>
           <span class="student-question-state" th:classappend="${q.status.name() == 'ANSWERED' ? 'answered' : 'waiting'}" th:text="${q.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời'}">Chưa trả lời</span>
+        </li>
+      </ul>
+    </section>
+
+    <section th:if="${isStudent}" class="panel student-question-panel">
+      <div class="panel-head">
+        <div><h2 class="panel-title"><i class="bi bi-megaphone"></i>Câu hỏi công khai mới</h2><div class="panel-subtitle">Tham khảo trao đổi đã được chia sẻ công khai trên QAUTE.</div></div>
+        <a class="btn btn-outline-primary btn-sm" th:href="@{/questions/public}">Xem tất cả</a>
+      </div>
+      <div th:if="${#lists.isEmpty(studentPublicQuestions)}" class="empty-state"><i class="bi bi-chat-square-text"></i><strong>Chưa có câu hỏi công khai</strong><p>Câu hỏi được chia sẻ công khai sẽ xuất hiện tại đây.</p></div>
+      <ul th:unless="${#lists.isEmpty(studentPublicQuestions)}" class="student-question-list">
+        <li class="student-question-row" th:each="q : ${studentPublicQuestions}">
+          <span class="question-status-mark" th:classappend="${q.status.name() == 'ANSWERED' ? 'answered' : 'waiting'}"><i th:class="${q.status.name() == 'ANSWERED' ? 'bi bi-check-lg' : 'bi bi-three-dots'}"></i></span>
+          <div class="student-question-content"><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.displaySubject}">Câu hỏi công khai</a><div class="student-question-meta"><span th:if="${q.faculty != null}" th:text="${q.faculty.name}">Khoa</span><span th:if="${q.topic != null}" th:text="${' · ' + q.topic.name}"> · Chuyên đề</span><span th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy HH:mm')}">28/10/2026 08:45</span></div></div>
+          <span class="student-question-state" th:classappend="${q.status.name() == 'ANSWERED' ? 'answered' : 'waiting'}" th:text="${q.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời'}">Trạng thái</span>
         </li>
       </ul>
     </section>
@@ -101,20 +116,20 @@
       <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-envelope-exclamation"></i>Chưa trả lời</h2><div class="panel-subtitle" th:text="${isManager ? 'Câu hỏi mới nhất trong tất cả khoa / đơn vị' : 'Câu hỏi mới nhất trong phạm vi khoa của bạn'}">Câu hỏi mới nhất</div></div><span class="count-badge orange" th:text="${unanswered.size()} + ' câu hỏi'">0 câu hỏi</span></div>
       <div th:if="${#lists.isEmpty(unanswered)}" class="empty-state"><i class="bi bi-inbox"></i><strong>Hộp thư đang trống</strong><p>Các câu hỏi chưa trả lời sẽ xuất hiện ở đây.</p></div>
       <ul th:unless="${#lists.isEmpty(unanswered)}" class="question-list">
-        <li class="question-row" th:each="q : ${unanswered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi sinh viên</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-open"><i class="bi bi-three-dots"></i> Chưa trả lời</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
+        <li class="question-row" th:each="q : ${unanswered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.displaySubject}">Câu hỏi sinh viên</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-open"><i class="bi bi-three-dots"></i> Chưa trả lời</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
       </ul>
     </section>
     <section th:if="${!isStudent}" class="panel">
       <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-check2-all"></i>Đã trả lời</h2><div class="panel-subtitle">Mở câu hỏi để xem toàn bộ trao đổi</div></div><span class="count-badge" th:text="${answered.size()} + ' câu hỏi'">0 câu hỏi</span></div>
       <div th:if="${#lists.isEmpty(answered)}" class="empty-state"><i class="bi bi-chat-square-text"></i><strong>Chưa có câu hỏi nào được trả lời</strong><p>Các câu hỏi đã có phản hồi sẽ xuất hiện tại đây.</p></div>
       <ul th:unless="${#lists.isEmpty(answered)}" class="question-list">
-        <li class="question-row" th:each="q : ${answered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi đã trả lời</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-answered"><i class="bi bi-check-circle-fill"></i> Đã trả lời</span><span class="status-badge visibility-badge" th:if="${q.isReplyNotification()}"><i class="bi bi-bell-fill"></i> Đã thông báo người hỏi</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
+        <li class="question-row" th:each="q : ${answered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.displaySubject}">Câu hỏi đã trả lời</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-answered"><i class="bi bi-check-circle-fill"></i> Đã trả lời</span><span class="status-badge visibility-badge" th:if="${q.isReplyNotification()}"><i class="bi bi-bell-fill"></i> Đã thông báo người hỏi</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
       </ul>
     </section>
     <section th:if="${isManager}" class="panel">
       <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-arrow-left-right"></i>Được chuyển đến khoa</h2><div class="panel-subtitle">Trưởng ban cố vấn có thể mở câu hỏi đã chuyển để phản hồi cho sinh viên</div></div><span class="count-badge" th:text="${transferred.size()} + ' câu hỏi'">0 câu hỏi</span></div>
       <div th:if="${#lists.isEmpty(transferred)}" class="empty-state"><i class="bi bi-inbox"></i><strong>Chưa có câu hỏi chuyển đến</strong><p>Các câu hỏi được chuyển vào đội ngũ khoa sẽ xuất hiện ở đây.</p></div>
-      <ul th:unless="${#lists.isEmpty(transferred)}" class="question-list"><li class="question-row" th:each="q : ${transferred}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi được chuyển</a><div class="question-preview" th:text="${q.body}">Nội dung</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-locked"><i class="bi bi-arrow-left-right"></i> Đã chuyển · có thể trả lời</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li></ul>
+      <ul th:unless="${#lists.isEmpty(transferred)}" class="question-list"><li class="question-row" th:each="q : ${transferred}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.displaySubject}">Câu hỏi được chuyển</a><div class="question-preview" th:text="${q.body}">Nội dung</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-locked"><i class="bi bi-arrow-left-right"></i> Đã chuyển · có thể trả lời</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li></ul>
     </section>
   </main>
   <div th:replace="~{fragments :: footer}"></div>

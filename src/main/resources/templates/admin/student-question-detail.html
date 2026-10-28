@@ -12,7 +12,7 @@
         <div class="d-flex gap-2"><form th:action="@{/admin/student-questions/{id}/delete(id=${question.id})}" method="post" onsubmit="return confirm('Gỡ câu hỏi này khỏi hệ thống?')"><button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Gỡ câu hỏi</button></form><a class="btn btn-light btn-sm" th:href="@{/admin/student-questions}"><i class="bi bi-arrow-left me-1"></i>Danh sách câu hỏi</a></div>
       </div>
       <section class="admin-card">
-        <div class="admin-card-head"><div><h2 th:text="${question.subject}">Tiêu đề câu hỏi</h2><p><span th:text="${question.faculty != null ? question.faculty.name : 'Chưa phân khoa'}">Khoa</span><span th:if="${question.topic != null}" th:text="${' · ' + question.topic.name}"></span></p></div><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></div>
+        <div class="admin-card-head"><div><h2 th:text="${question.displaySubject}">Tiêu đề câu hỏi</h2><p><span th:text="${question.faculty != null ? question.faculty.name : 'Chưa phân khoa'}">Khoa</span><span th:if="${question.topic != null}" th:text="${' · ' + question.topic.name}"></span></p></div><span class="admin-status" th:classappend="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'pending' : ''}" th:text="${question.status.name() == 'OPEN' || question.status.name() == 'UNANSWERED' ? 'Chưa trả lời' : 'Đã trả lời'}">Trạng thái</span></div>
         <div class="admin-card-body">
           <div class="d-flex justify-content-between flex-wrap gap-2 mb-3"><span class="admin-primary-text" th:text="${question.asker.displayName + ' · ' + question.asker.email}">Sinh viên</span><span class="admin-secondary-text" th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</span></div>
           <div class="admin-question-content" th:text="${question.body}">Nội dung câu hỏi</div>
@@ -24,7 +24,7 @@
         <div class="admin-card-body">
           <article class="admin-answer-card" th:each="answer : ${answers}">
             <div class="d-flex justify-content-between flex-wrap gap-2"><strong class="admin-primary-text" th:text="${answer.author.displayName}">Tư vấn viên</strong><span class="admin-secondary-text" th:text="${answer.createdAt != null ? #temporals.format(answer.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</span></div>
-            <p th:text="${answer.body}">Nội dung trả lời</p>
+            <p th:text="${answer.displayBody}">Nội dung trả lời</p>
           </article>
           <div th:if="${#lists.isEmpty(answers)}" class="admin-empty"><i class="bi bi-chat-dots"></i>Câu hỏi chưa có phản hồi.</div>
         </div>

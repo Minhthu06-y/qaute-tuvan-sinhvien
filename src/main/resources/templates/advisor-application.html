@@ -7,13 +7,13 @@
 <div class="page-shell"><main class="page-content">
   <div th:replace="~{fragments :: alerts}"></div>
   <div class="page-heading"><div><div class="eyebrow">Đội ngũ QAUTE</div><h1>Yêu cầu làm tư vấn viên</h1><p class="heading-caption">Manager của khoa / đơn vị sẽ xem xét yêu cầu này.</p></div></div>
-  <section th:if="${application != null}" class="mail-card p-4 mb-3">
+  <section th:if="${latestApplication != null}" class="mail-card p-4 mb-3">
     <h2 class="h5">Yêu cầu gần nhất</h2>
-    <p class="mb-2">Khoa / đơn vị: <strong th:text="${application.department.name}">Khoa</strong> · Chức danh: <strong th:text="${application.advisorType.label}">Tư vấn viên</strong></p>
-    <p class="mb-2">Trạng thái: <span class="status-badge" th:text="${application.status}">PENDING</span></p>
-    <p class="mb-0" th:if="${application.reviewNote != null}" th:text="${application.reviewNote}">Ghi chú duyệt</p>
+    <p class="mb-2">Khoa / đơn vị: <strong th:text="${latestApplication.department != null ? latestApplication.department.name : 'Chưa phân khoa'}">Khoa</strong> · Chức danh: <strong th:text="${latestApplication.advisorType != null ? latestApplication.advisorType.label : 'Tư vấn viên'}">Tư vấn viên</strong></p>
+    <p class="mb-2">Trạng thái: <span class="status-badge" th:text="${latestApplication.status}">PENDING</span></p>
+    <p class="mb-0" th:if="${latestApplication.reviewNote != null}" th:text="${latestApplication.reviewNote}">Ghi chú duyệt</p>
   </section>
-  <section th:if="${application == null || application.status.name() != 'PENDING'}" class="mail-card p-4">
+  <section th:if="${latestApplication == null || latestApplication.status.name() != 'PENDING'}" class="mail-card p-4">
     <form th:action="@{/advisor-application}" th:object="${form}" method="post">
       <div class="mb-3"><label class="form-label" for="departmentId">Khoa / đơn vị muốn tham gia</label><select id="departmentId" class="form-select" th:field="*{departmentId}" required><option value="">Chọn khoa / đơn vị</option><option th:each="department : ${departments}" th:value="${department.id}" th:text="${department.name}">Khoa</option></select><div class="text-danger small" th:errors="*{departmentId}"></div></div>
       <div class="mb-3"><label class="form-label" for="topicId">Chuyên đề tư vấn</label><select id="topicId" class="form-select" th:field="*{topicId}" required><option value="">Chọn chuyên đề</option><option th:each="topic : ${topics}" th:value="${topic.id}" th:attr="data-department=${topic.faculty.name}" th:text="${topic.faculty.name + ' · ' + topic.name}">Chuyên đề</option></select><div class="text-danger small" th:errors="*{topicId}"></div></div>

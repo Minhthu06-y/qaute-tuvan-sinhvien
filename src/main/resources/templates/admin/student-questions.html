@@ -37,7 +37,7 @@
         <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Câu hỏi</th><th>Sinh viên</th><th>Khoa / chuyên đề</th><th>Ngày gửi</th><th>Trạng thái</th><th></th></tr></thead>
           <tbody>
             <tr th:each="question : ${page.content}">
-              <td><a class="admin-primary-text text-decoration-none" th:href="@{/admin/student-questions/{id}(id=${question.id})}" th:text="${question.subject}">Tiêu đề câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(question.body, 100)}">Nội dung câu hỏi</small></td>
+              <td><a class="admin-primary-text text-decoration-none" th:href="@{/admin/student-questions/{id}(id=${question.id})}" th:text="${question.displaySubject}">Tiêu đề câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(question.body, 100)}">Nội dung câu hỏi</small></td>
               <td><span class="admin-primary-text" th:text="${question.asker.displayName}">Sinh viên</span><small class="admin-secondary-text" th:text="${question.asker.email}">email@example.edu.vn</small></td>
               <td><span th:text="${question.faculty.name}">Khoa</span><small class="admin-secondary-text" th:if="${question.topic != null}" th:text="${question.topic.name}">Chuyên đề</small></td>
               <td th:text="${question.createdAt != null ? #temporals.format(question.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">18/10/2026</td>

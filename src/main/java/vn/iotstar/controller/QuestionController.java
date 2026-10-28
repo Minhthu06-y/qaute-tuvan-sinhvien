@@ -71,6 +71,7 @@ public class QuestionController {
         List<Question> all;
         List<FacultyTopic> availableTopics;
         List<Faculty> visibleFaculties = List.of();
+        List<Question> studentPublicQuestions = List.of();
         Set<Long> allowedManagerDepartments = viewer.isManager()
                 ? scope.managerDepartments(viewer.user().getEmail()) : Set.of();
         Long selectedFacultyId = null;
@@ -78,6 +79,8 @@ public class QuestionController {
         if (viewer.isStudent()) {
             all = questions.findByAskerIdOrderByCreatedAtDesc(viewer.user().getId()).stream()
                     .filter(question -> !question.isDeleted()).toList();
+            studentPublicQuestions = questions.findByIsPublicTrueOrderByCreatedAtDesc().stream()
+                    .filter(question -> !question.isDeleted()).limit(8).toList();
             availableTopics = List.of();
         } else if (viewer.role() == Role.ADMIN) {
             all = questions.findAllByOrderByCreatedAtDesc().stream()
@@ -124,6 +127,7 @@ public class QuestionController {
         model.addAttribute("unanswered", unanswered);
         model.addAttribute("answered", answered);
         model.addAttribute("studentQuestions", all);
+        model.addAttribute("studentPublicQuestions", studentPublicQuestions);
         model.addAttribute("topics", availableTopics);
         model.addAttribute("selectedTopicId", selectedTopicId);
         List<Question> transferred = viewer.isManager()
@@ -372,7 +376,7 @@ public class QuestionController {
             flash.addFlashAttribute("error", "Nội dung bình luận phải có từ 1 đến 10.000 ký tự.");
             return "redirect:/questions/" + question.getId();
         }
-        answer.setBody(body.trim());
+        answer.setBody(answer.withPreservedSeedMarker(body.trim()));
         answer.setEditedAt(LocalDateTime.now());
         if (viewer.isAdvisor()) {
             if (answer.getApprovalStatus() != ApprovalStatus.PENDING) {

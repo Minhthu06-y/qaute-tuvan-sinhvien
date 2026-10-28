@@ -38,6 +38,7 @@
     <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'questions' ? 'active' : ''}" th:href="@{/admin/student-questions}"><i class="bi bi-chat-left-text"></i><span>Quản lý câu hỏi</span></a>
     <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'accounts' ? 'active' : ''}" th:href="@{/admin/accounts}"><i class="bi bi-person-vcard"></i><span>Quản lý tài khoản</span></a>
     <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'advisors' ? 'active' : ''}" th:href="@{/admin/advisors}"><i class="bi bi-person-lines-fill"></i><span>Tư vấn viên</span></a>
+    <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'advisor-applications' ? 'active' : ''}" th:href="@{/admin/advisor-applications}"><i class="bi bi-person-check"></i><span>Duyệt tư vấn viên</span></a>
     <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'managers' ? 'active' : ''}" th:href="@{/admin/managers}"><i class="bi bi-people"></i><span>Quản lý khoa</span></a>
     <a th:if="${isAdmin}" class="side-link" th:classappend="${active == 'logs' ? 'active' : ''}" th:href="@{/admin/logs}"><i class="bi bi-clock-history"></i><span>Nhật ký hoạt động</span></a>
     <a th:if="${isManager}" class="side-link" th:classappend="${active == 'dashboard' ? 'active' : ''}" th:href="@{/manager/dashboard}"><i class="bi bi-grid-1x2"></i><span>Tổng quan</span></a>

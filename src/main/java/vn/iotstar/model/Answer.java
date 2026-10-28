@@ -54,6 +54,16 @@ public class Answer {
     public User getAdvisor() { return author; }
     public void setAdvisor(User advisor) { this.author = advisor; }
     public String getBody() { return body; }
+    /** Hides the seed tracking key from user-facing pages while keeping it in storage. */
+    public String getDisplayBody() {
+        return body == null ? null : body.replaceFirst("^\\[QAUTE-DEMO-A\\d+-\\d+\\]\\s*", "");
+    }
+    public String withPreservedSeedMarker(String displayBody) {
+        if (body != null && body.matches("^\\[QAUTE-DEMO-A\\d+-\\d+\\].*")) {
+            return body.substring(0, body.indexOf(']') + 1) + " " + displayBody;
+        }
+        return displayBody;
+    }
     public void setBody(String body) { this.body = body; }
     public String getContent() { return body; }
     public void setContent(String content) { this.body = content; }

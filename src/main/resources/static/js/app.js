@@ -19,7 +19,7 @@
       const showEvent = frame => {
         const event = JSON.parse(frame.body);
         messageNode.textContent = event.message || 'Bạn có thông báo mới.';
-        linkNode.href = `/questions/${event.questionId}`;
+        linkNode.href = event.link || (event.questionId ? `/questions/${event.questionId}` : '#');
         toast.classList.add('visible');
         clearTimeout(dismissTimer);
         dismissTimer = setTimeout(() => toast.classList.remove('visible'), 9000);

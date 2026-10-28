@@ -10,19 +10,24 @@ import org.springframework.transaction.annotation.Transactional;
 
 import vn.iotstar.entity.Notification;
 import vn.iotstar.entity.User;
+import vn.iotstar.enums.Role;
 import vn.iotstar.repository.NotificationRepository;
+import vn.iotstar.repository.UserRepository;
 
 @Service
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messaging;
+    private final UserRepository users;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            SimpMessagingTemplate messaging) {
+            SimpMessagingTemplate messaging,
+            UserRepository users) {
         this.notificationRepository = notificationRepository;
         this.messaging = messaging;
+        this.users = users;
     }
 
     /**
@@ -83,16 +88,40 @@ public class NotificationService {
             String message,
             Long questionId) {
 
+        notifyManagers(facultyId, type, message, questionId, "");
+    }
+
+    public void notifyManagers(
+            Long facultyId,
+            String type,
+            String message,
+            Long questionId,
+            String link) {
+
     	Object payload = Map.<String, Object>of(
     		    "type", type,
     		    "message", message,
-    		    "questionId", questionId == null ? "" : questionId
+		    "questionId", questionId == null ? "" : questionId,
+                "link", link == null ? "" : link
     	);
 
         messaging.convertAndSend(
                 "/topic/faculties/" + facultyId,
                 (Object) payload
         );
+    }
+
+    /** Sends a review request to every active administrator's personal notification topic. */
+    public void notifyAdmins(String type, String message, String link) {
+        Object payload = Map.<String, Object>of(
+                "type", type,
+                "message", message,
+                "questionId", "",
+                "link", link == null ? "" : link);
+        users.findByRole(Role.ADMIN).stream()
+                .filter(user -> user.isEnabled() && !user.isDeleted())
+                .forEach(user -> messaging.convertAndSend(
+                        "/topic/notifications/" + user.getId(), payload));
     }
 
     /**

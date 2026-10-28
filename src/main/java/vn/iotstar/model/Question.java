@@ -91,6 +91,10 @@ public class Question {
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
     public String getSubject() { return subject; }
+    /** Hides the seed tracking key from user-facing pages while keeping it in storage. */
+    public String getDisplaySubject() {
+        return subject == null ? null : subject.replaceFirst("^\\[QAUTE-DEMO-Q\\d+\\]\\s*", "");
+    }
     public void setSubject(String subject) { this.subject = subject; }
     public String getTitle() { return subject; }
     public void setTitle(String title) { this.subject = title; }

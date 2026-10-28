@@ -23,7 +23,7 @@
             <thead><tr><th>Câu hỏi</th><th>Chuyên đề / khoa</th><th>Tư vấn viên</th><th>Ngày trả lời</th><th>Trạng thái</th><th></th></tr></thead>
             <tbody>
               <tr th:each="answer : ${answers}">
-                <td><a class="admin-primary-text text-decoration-none" th:href="@{/manager/reviews/{id}(id=${answer.id})}" th:text="${answer.question.title}">Câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(answer.content, 100)}">Nội dung trả lời</small></td>
+                <td><a class="admin-primary-text text-decoration-none" th:href="@{/manager/reviews/{id}(id=${answer.id})}" th:text="${answer.question.displaySubject}">Câu hỏi</a><small class="admin-secondary-text" th:text="${#strings.abbreviate(answer.displayBody, 100)}">Nội dung trả lời</small></td>
                 <td><span th:text="${answer.question.category != null ? answer.question.category : 'Chưa phân chuyên đề'}">Chuyên đề</span><small class="admin-secondary-text" th:text="${answer.question.department != null ? answer.question.department.name : 'Chưa phân khoa'}">Khoa</small></td>
                 <td th:text="${answer.advisor != null ? answer.advisor.fullName : (answer.author != null ? answer.author.fullName : 'Tư vấn viên')}">Tư vấn viên</td>
                 <td th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</td>

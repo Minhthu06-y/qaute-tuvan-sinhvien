@@ -98,7 +98,7 @@ public class QuestionBrowseService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản Manager"));
         if (!answer.getAuthor().getId().equals(manager.getId()))
             throw new AccessDeniedException("Bạn chỉ được sửa bình luận do mình viết");
-        answer.setBody(content.trim());
+        answer.setBody(answer.withPreservedSeedMarker(content.trim()));
         answer.setEditedAt(LocalDateTime.now());
         answers.save(answer);
         if (question.getAsker() != null)

@@ -34,7 +34,7 @@ public class AdvisorApplicationController {
         var viewer = sessionContext.viewer(session);
         if (viewer == null || !viewer.isStudent()) return "redirect:/questions";
         if (!model.containsAttribute("form")) model.addAttribute("form", new AdvisorApplicationForm());
-        model.addAttribute("application", applications.latest(viewer.user().getId()));
+        model.addAttribute("latestApplication", applications.latest(viewer.user().getId()));
         return formModel(model);
     }
 
@@ -52,7 +52,7 @@ public class AdvisorApplicationController {
                 binding.rejectValue(error.getField(), "custom", error.getMessage());
             }
         }
-        model.addAttribute("application", applications.latest(viewer.user().getId()));
+        model.addAttribute("latestApplication", applications.latest(viewer.user().getId()));
         return formModel(model);
     }
 
