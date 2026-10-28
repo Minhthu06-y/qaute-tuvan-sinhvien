@@ -37,7 +37,7 @@ public class DataSeeder implements CommandLineRunner {
         if (adminEmail != null && !adminEmail.isBlank() && adminPassword != null && !adminPassword.isBlank()
                 && !users.existsByEmailIgnoreCase(adminEmail.trim())) {
             User a = new User();
-            a.setEmail(adminEmail.trim().toLowerCase(java.util.Locale.ROOT)); a.setFullName("Quản trị viên");
+            a.setEmail(adminEmail.trim().toLowerCase(java.util.Locale.ROOT)); a.setFullName(DemoPersonNames.forRole(Role.ADMIN, 1));
             a.setPasswordHash(encoder.encode(adminPassword)); a.setRole(Role.ADMIN);
             a.setStatus(UserStatus.ACTIVE); a.setEnabled(true);
             users.save(a);

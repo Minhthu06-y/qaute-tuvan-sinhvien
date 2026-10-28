@@ -4,6 +4,7 @@ import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,12 @@ import vn.iotstar.repository.UserRepository;
 @RequiredArgsConstructor
 @Slf4j
 public class DepartmentDemoAccountSeeder implements CommandLineRunner {
+    private static final Map<String, Integer> LOCAL_TEST_ACCOUNT_NAME_INDICES = Map.of(
+            "manager@qaute.edu.vn", 80,
+            "canbo@qaute.edu.vn", 80,
+            "giangvien@qaute.edu.vn", 81,
+            "tuvanvien@qaute.edu.vn", 82);
+
     private final UserRepository users;
     private final DepartmentRepository departments;
     private final AdvisorProfileRepository advisorProfiles;
@@ -59,6 +66,7 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
         }
 
         List<User> allUsers = users.findAll();
+        refreshGeneratedDepartmentAccountNames(allUsers);
         List<AdvisorProfile> allProfiles = advisorProfiles.findAll();
         List<Faculty> allFaculties = faculties.findAll();
         int managersCreated = 0;
@@ -148,7 +156,8 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
         String email = availableEmail(rolePrefix, department.getId());
         User user = new User();
         user.setEmail(email);
-        user.setFullName(("manager".equals(rolePrefix) ? "Manager - " : "T\u01B0 v\u1EA5n vi\u00EAn - ") + department.getName());
+        Role role = "manager".equals(rolePrefix) ? Role.MANAGER : Role.CONSULTANT;
+        user.setFullName(DemoPersonNames.forRole(role, department.getId().intValue()));
         user.setPasswordHash(passwordEncoder.encode(demoPassword));
         user.setRole("manager".equals(rolePrefix) ? Role.MANAGER : Role.CONSULTANT);
         user.setStatus(UserStatus.ACTIVE);
@@ -156,6 +165,31 @@ public class DepartmentDemoAccountSeeder implements CommandLineRunner {
         user.setDeleted(false);
         user.setFaculty(facultyFor(department, allFaculties));
         return user;
+    }
+
+    private void refreshGeneratedDepartmentAccountNames(List<User> allUsers) {
+        for (User user : allUsers) {
+            Role role = user.getRole();
+            if (role != Role.MANAGER && role != Role.CONSULTANT) continue;
+            String email = user.getEmail() == null ? "" : user.getEmail().toLowerCase(Locale.ROOT);
+            Integer nameIndex = LOCAL_TEST_ACCOUNT_NAME_INDICES.get(email);
+            if (nameIndex == null) {
+                String prefix = role == Role.MANAGER ? "manager.dept" : "consultant.dept";
+                if (!email.startsWith(prefix)) continue;
+
+                String suffix = email.substring(prefix.length());
+                int end = 0;
+                while (end < suffix.length() && Character.isDigit(suffix.charAt(end))) end++;
+                if (end == 0) continue;
+                try {
+                    nameIndex = Integer.parseInt(suffix.substring(0, end));
+                } catch (NumberFormatException ignored) {
+                    continue;
+                }
+            }
+            user.setFullName(DemoPersonNames.forRole(role, nameIndex));
+            users.save(user);
+        }
     }
 
     private String availableEmail(String rolePrefix, Long departmentId) {

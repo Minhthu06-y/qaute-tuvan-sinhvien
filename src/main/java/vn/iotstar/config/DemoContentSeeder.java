@@ -166,6 +166,7 @@ public class DemoContentSeeder implements CommandLineRunner {
     private User account(String kind, int index, Role role, Department department, Faculty faculty) {
         String baseEmail = String.format(Locale.ROOT, "demo.%s%02d%s", kind, index, EMAIL_DOMAIN);
         User user = findOrCreateAccount(baseEmail, role, index);
+        user.setFullName(DemoPersonNames.forRole(role, index));
         user.setRole(role);
         user.setStatus(UserStatus.ACTIVE);
         user.setEnabled(true);
@@ -199,12 +200,7 @@ public class DemoContentSeeder implements CommandLineRunner {
 
             User user = new User();
             user.setEmail(email);
-            user.setFullName(switch (role) {
-                case USER -> "Student QAUTE " + String.format(Locale.ROOT, "%02d", index);
-                case CONSULTANT -> "T\u01B0 v\u1EA5n vi\u00EAn QAUTE " + String.format(Locale.ROOT, "%02d", index);
-                case MANAGER -> "Manager QAUTE " + String.format(Locale.ROOT, "%02d", index);
-                case ADMIN -> "QAUTE Admin " + String.format(Locale.ROOT, "%02d", index);
-            });
+            user.setFullName(DemoPersonNames.forRole(role, index));
             user.setPasswordHash(passwordEncoder.encode(demoPassword));
             user.setRole(role);
             user.setStatus(UserStatus.ACTIVE);

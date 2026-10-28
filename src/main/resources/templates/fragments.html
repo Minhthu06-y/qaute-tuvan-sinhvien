@@ -72,7 +72,7 @@
   <div class="footer-school">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</div>
 </footer>
 
-<div th:fragment="scripts" th:attr="data-user-id=${notificationUserId},data-faculty-id=${currentUser.faculty != null ? currentUser.faculty.id : ''},data-role=${currentRole}" id="app-scripts">
+<div th:fragment="scripts" th:attr="data-user-id=${notificationUserId},data-faculty-id=${currentUser != null and currentUser.faculty != null ? currentUser.faculty.id : ''},data-role=${currentRole}" id="app-scripts">
   <div id="live-toast" class="live-toast" role="status"><i class="bi bi-bell-fill"></i><span id="live-toast-message"></span><a id="live-toast-link" href="#">Xem</a></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
