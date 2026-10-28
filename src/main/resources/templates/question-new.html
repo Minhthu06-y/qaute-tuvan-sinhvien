@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Gửi câu hỏi')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<aside th:replace="~{fragments :: sidebar('new')}"></aside>
+<div class="page-shell">
+  <main class="page-content">
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="page-heading">
+      <div><div class="eyebrow">Dịch vụ sinh viên</div><h1>Gửi câu hỏi tư vấn</h1><p class="heading-caption">Chọn chuyên đề phù hợp để câu hỏi đến đúng đơn vị phụ trách.</p></div>
+      <a class="btn btn-outline-primary btn-sm" th:href="@{/questions}"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
+    </div>
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-pencil-square"></i>Nội dung câu hỏi</h2><div class="panel-subtitle">Chọn đơn vị trước, sau đó chọn một chuyên đề trong danh mục.</div></div><span class="status-badge status-open">Mới</span></div>
+      <form th:action="@{/questions}" method="post" enctype="multipart/form-data" class="p-4">
+        <div class="mb-3"><label class="form-label" for="questionFacultyId">Khoa / đơn vị <span class="text-danger">*</span></label><select id="questionFacultyId" name="facultyId" class="form-select" required><option value="">Chọn khoa hoặc đơn vị</option><option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:text="${faculty.name}">Khoa Công nghệ thông tin</option></select></div>
+        <div class="mb-3"><label class="form-label">Chuyên đề <span class="text-danger">*</span></label><div id="questionTopicPicker" class="topic-picker" data-topic-selector data-faculty-select="#questionFacultyId"><label th:each="topic : ${topics}" class="topic-option" th:attr="data-faculty-id=${topic.faculty.id}" hidden><input class="form-check-input" type="radio" name="topicId" th:value="${topic.id}" required disabled><span><strong th:text="${topic.name}">Học vụ</strong><small>Chọn mục này để gửi câu hỏi đến đúng nhóm tư vấn</small></span></label><p class="topic-picker-hint" data-topic-empty>Chọn khoa hoặc đơn vị để xem các chuyên đề.</p></div></div>
+        <div class="mb-3"><label class="form-label" for="body">Nội dung chi tiết <span class="text-danger">*</span></label><textarea id="body" name="body" class="form-control" rows="8" maxlength="8000" required placeholder="Mô tả tình huống và điều bạn muốn được giải đáp..."></textarea></div>
+        <div class="mb-4"><label class="form-label" for="attachment">Tệp đính kèm <span class="text-muted fw-normal">(tùy chọn)</span></label><input id="attachment" name="attachment" type="file" class="form-control" accept="image/*,.pdf,.doc,.docx"><div class="form-hint mt-2">Tệp được lưu trên Cloudinary khi đã cấu hình CLOUDINARY_URL.</div></div>
+        <div class="d-flex justify-content-end gap-2"><a th:href="@{/questions}" class="btn btn-light btn-sm">Hủy</a><button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send me-1"></i>Gửi câu hỏi</button></div>
+      </form>
+    </section>
+  </main>
+  <div th:replace="~{fragments :: footer}"></div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

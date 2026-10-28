@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/layout :: head('Chi tiết duyệt câu trả lời')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+  <aside th:replace="~{admin/layout :: sidebar('reviews')}"></aside>
+  <div class="admin-main">
+    <header th:replace="~{admin/layout :: topbar}"></header>
+    <main class="admin-content">
+      <div th:replace="~{admin/layout :: alerts}"></div>
+      <div class="admin-page-heading">
+        <div><div class="admin-kicker">Duyệt câu trả lời</div><h1 th:text="${answer.question.title}">Câu hỏi sinh viên</h1><p><span th:text="${answer.question.category != null ? answer.question.category : 'Chưa phân chuyên đề'}">Chuyên đề</span> · <span th:text="${answer.question.department != null ? answer.question.department.name : 'Chưa phân khoa'}">Khoa</span></p></div>
+        <a class="btn btn-light btn-sm" th:href="@{/manager/reviews}"><i class="bi bi-arrow-left me-1"></i>Danh sách duyệt</a>
+      </div>
+      <section class="admin-card"><div class="admin-card-head"><div><h2>Nội dung câu hỏi</h2><p>Người hỏi: <span th:text="${answer.question.asker != null ? answer.question.asker.fullName : 'Sinh viên'}">Sinh viên</span></p></div><span class="admin-status" th:text="${answer.question.status}">UNANSWERED</span></div><div class="admin-card-body"><div class="admin-question-content" th:text="${answer.question.content}">Nội dung câu hỏi</div><a class="btn btn-outline-primary btn-sm mt-3" th:href="@{/manager/questions/{id}(id=${answer.question.id})}">Mở câu hỏi</a></div></section>
+      <section class="admin-card"><div class="admin-card-head"><div><h2>Câu trả lời cần xem xét</h2><p><span th:text="${answer.advisor != null ? answer.advisor.fullName : (answer.author != null ? answer.author.fullName : 'Tư vấn viên')}">Tư vấn viên</span> · <span th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</span></p></div><span class="admin-status" th:classappend="${answer.approvalStatus.name() == 'PENDING' ? 'pending' : ''}" th:text="${answer.approvalStatus}">PENDING</span></div><div class="admin-card-body"><div class="admin-question-content" th:text="${answer.content}">Nội dung trả lời</div></div></section>
+      <section class="admin-card" th:if="${answer.approvalStatus.name() == 'PENDING'}"><div class="admin-card-head"><div><h2>Quyết định duyệt</h2><p>Khi từ chối, vui lòng gửi kèm câu trả lời đề xuất để sinh viên vẫn nhận được hướng dẫn.</p></div></div><div class="admin-card-body">
+        <form th:action="@{/manager/reviews/{id}(id=${answer.id})}" th:object="${form}" method="post">
+          <div class="mb-3"><label class="form-label d-block">Quyết định</label><div class="form-check form-check-inline"><input class="form-check-input" type="radio" th:field="*{decision}" value="APPROVED" id="decisionApproved"><label class="form-check-label" for="decisionApproved">Duyệt câu trả lời</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="radio" th:field="*{decision}" value="REJECTED" id="decisionRejected"><label class="form-check-label" for="decisionRejected">Từ chối</label></div><div class="text-danger small" th:errors="*{decision}"></div></div>
+          <div class="mb-3"><label class="form-label" for="reason">Lý do / nhận xét</label><textarea id="reason" class="form-control" th:field="*{reason}" rows="3" required></textarea><div class="text-danger small" th:errors="*{reason}"></div></div>
+          <div class="mb-3"><label class="form-label" for="betterAnswer">Câu trả lời đề xuất (bắt buộc khi từ chối)</label><textarea id="betterAnswer" class="form-control" th:field="*{betterAnswer}" rows="4"></textarea><div class="text-danger small" th:errors="*{betterAnswer}"></div></div>
+          <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-check2-circle me-1"></i>Lưu quyết định</button>
+        </form>
+      </div></section>
+      <section class="admin-card"><div class="admin-card-head"><div><h2>Lịch sử trao đổi và duyệt</h2><p th:text="${thread.size()} + ' câu trả lời · ' + ${history.size()} + ' quyết định'"></p></div></div><div class="admin-card-body">
+        <article class="admin-answer-card" th:each="item : ${thread}"><div class="d-flex justify-content-between gap-2"><strong class="admin-primary-text" th:text="${item.advisor != null ? item.advisor.fullName : (item.author != null ? item.author.fullName : 'Tư vấn viên')}">Tư vấn viên</strong><small class="admin-secondary-text" th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</small></div><p th:text="${item.content}">Nội dung trả lời</p><span class="admin-status" th:text="${item.approvalStatus}">PENDING</span></article>
+        <article class="admin-answer-card" th:each="item : ${history}"><div class="d-flex justify-content-between gap-2"><strong class="admin-primary-text" th:text="${item.manager.fullName}">Trưởng ban cố vấn</strong><small class="admin-secondary-text" th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</small></div><p th:text="${item.reason}">Lý do duyệt</p><p th:if="${item.betterAnswer != null}" th:text="${item.betterAnswer}">Câu trả lời đề xuất</p></article>
+      </div></section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

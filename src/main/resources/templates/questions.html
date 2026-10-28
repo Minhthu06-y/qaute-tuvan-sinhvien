@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Hộp câu hỏi')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<aside th:replace="~{fragments :: sidebar('questions')}"></aside>
+<div class="page-shell">
+  <main class="page-content">
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Không gian tư vấn</div>
+        <h1 th:text="${isManager ? 'Câu hỏi toàn trường' : (isStudent ? 'Câu hỏi của tôi' : 'Hộp câu hỏi theo khoa')}">Hộp câu hỏi</h1>
+        <p class="heading-caption" th:text="${isManager ? 'Theo dõi và rà soát câu hỏi từ tất cả khoa và chuyên đề.' : (isStudent ? 'Theo dõi tình trạng các câu hỏi bạn đã gửi.' : 'Câu hỏi trong phạm vi đội ngũ tư vấn của khoa.')}">Theo dõi câu hỏi</p>
+      </div>
+      <div class="heading-actions">
+        <a class="btn btn-outline-primary btn-sm" th:href="@{/questions/public}"><i class="bi bi-megaphone me-1"></i>Câu hỏi công khai</a>
+        <a th:if="${isStudent}" class="btn btn-primary btn-sm" th:href="@{/questions/new}"><i class="bi bi-plus-lg me-1"></i>Gửi câu hỏi</a>
+        <a th:if="${isManager}" class="btn btn-primary btn-sm" th:href="@{/manager/approvals}"><i class="bi bi-check2-circle me-1"></i>Duyệt trả lời <span class="badge text-bg-warning ms-1" th:text="${pendingCount}">0</span></a>
+      </div>
+    </div>
+
+    <section th:if="${isStudent}" class="panel student-question-panel">
+      <div class="panel-head">
+        <div><h2 class="panel-title"><i class="bi bi-inbox"></i>Câu hỏi đã gửi</h2><div class="panel-subtitle">✓ Đã được trả lời · … Đang chờ tư vấn viên</div></div>
+        <span class="count-badge" th:text="${studentQuestions.size()} + ' câu hỏi'">0 câu hỏi</span>
+      </div>
+      <div th:if="${#lists.isEmpty(studentQuestions)}" class="empty-state"><i class="bi bi-inbox"></i><strong>Bạn chưa gửi câu hỏi nào</strong><p>Các câu hỏi bạn gửi sẽ xuất hiện tại đây.</p></div>
+      <ul th:unless="${#lists.isEmpty(studentQuestions)}" class="student-question-list">
+        <li class="student-question-row" th:each="q : ${studentQuestions}">
+          <span class="question-status-mark" th:classappend="${q.status.name() == 'ANSWERED' ? 'answered' : 'waiting'}" th:attr="aria-label=${q.status.name() == 'ANSWERED' ? 'Đã được trả lời' : 'Đang chờ trả lời'}">
+            <i th:class="${q.status.name() == 'ANSWERED' ? 'bi bi-check-lg' : 'bi bi-three-dots'}"></i>
+          </span>
+          <div class="student-question-content">
+            <a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Tiêu đề câu hỏi</a>
+            <div class="student-question-meta">
+              <span th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span>
+              <span th:if="${q.topic != null}">·</span>
+              <span th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 08:45</span>
+            </div>
+          </div>
+          <span class="student-question-state" th:classappend="${q.status.name() == 'ANSWERED' ? 'answered' : 'waiting'}" th:text="${q.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời'}">Chưa trả lời</span>
+        </li>
+      </ul>
+    </section>
+
+    <section th:if="${isStudent}" class="faculty-card unit-browser" id="departments">
+      <div class="faculty-card-head"><i class="bi bi-diagram-3 me-2"></i>Câu hỏi theo đơn vị tư vấn</div>
+      <p class="unit-browser-hint">Chọn đơn vị để xem chuyên đề, câu hỏi công khai và trạng thái tư vấn viên.</p>
+      <div class="unit-accordion-list">
+        <details class="unit-accordion" th:each="unit : ${unitDirectory}">
+          <summary class="unit-summary"><span><i class="bi bi-building me-2"></i><strong th:text="${unit.faculty.name}">Khoa Công Nghệ Thông Tin</strong></span><i class="bi bi-chevron-down unit-chevron"></i></summary>
+          <div class="unit-details">
+            <a class="unit-all-questions" th:href="@{/questions/public(facultyId=${unit.faculty.id})}"><i class="bi bi-chat-square-text me-1"></i>Tất cả câu hỏi công khai của đơn vị</a>
+            <div class="unit-topics">
+              <span class="unit-section-label">Chuyên đề tư vấn</span>
+              <a th:each="unitTopic : ${unit.topics}"
+                 th:href="@{/questions/public(facultyId=${unit.faculty.id},topicId=${unitTopic.id})}" th:text="${unitTopic.name}">Chuyên đề</a>
+              <span class="unit-no-topics" th:if="${#lists.isEmpty(unit.topics)}">Chưa có chuyên đề.</span>
+            </div>
+            <div class="unit-consultants">
+              <span class="unit-section-label">Tư vấn viên</span>
+              <div class="unit-consultant" th:each="consultant : ${unit.consultants}">
+                <span class="presence-dot" th:classappend="${consultant.online ? 'online' : 'offline'}"></span>
+                <span class="consultant-name" th:text="${consultant.name}">Tên tư vấn viên</span>
+                <span class="consultant-title" th:text="${consultant.title}">Tư vấn viên</span>
+                <span class="presence-label" th:classappend="${consultant.online ? 'online' : 'offline'}" th:text="${consultant.online ? 'Online' : 'Offline'}">Offline</span>
+              </div>
+              <p class="unit-no-consultants" th:if="${#lists.isEmpty(unit.consultants)}">Chưa có thông tin tư vấn viên.</p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <div th:if="${!isStudent}" class="stat-grid">
+      <div class="stat-card"><div class="stat-icon blue"><i class="bi bi-inbox"></i></div><div><div class="stat-number" th:text="${unanswered.size() + answered.size() + transferred.size()}">12</div><div class="stat-label">Tổng câu hỏi trong hộp thư</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-number" th:text="${unanswered.size()}">4</div><div class="stat-label">Chưa có câu trả lời</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="bi bi-chat-square-check"></i></div><div><div class="stat-number" th:text="${answered.size()}">8</div><div class="stat-label">Đã có phản hồi</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="bi bi-building"></i></div><div><div class="stat-number" th:text="${facultyCount}">18</div><div class="stat-label">Đội ngũ khoa / đơn vị</div></div></div>
+    </div>
+    <form th:if="${isManager}" th:action="@{/questions}" method="get" class="panel p-3 mb-3 d-flex align-items-end gap-3 flex-wrap">
+      <div class="flex-grow-1"><label class="form-label mb-1" for="facultyFilter">Lọc theo khoa / đơn vị</label><select id="facultyFilter" name="facultyId" class="form-select"><option value="">Tất cả khoa / đơn vị</option><option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:selected="${selectedFacultyId != null && selectedFacultyId == faculty.id}" th:text="${faculty.name}">Khoa</option></select></div>
+      <div class="flex-grow-1"><label class="form-label mb-1" for="managerTopicFilter">Lọc theo chuyên đề</label><select id="managerTopicFilter" name="topicId" class="form-select"><option value="">Tất cả chuyên đề</option><option th:each="topic : ${topics}" th:value="${topic.id}" th:selected="${selectedTopicId != null && selectedTopicId == topic.id}" th:text="${topic.faculty.name + ' · ' + topic.name}">Khoa · Chuyên đề</option></select></div>
+      <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Lọc câu hỏi</button><a th:href="@{/questions}" class="btn btn-light btn-sm">Xóa lọc</a>
+    </form>
+    <section th:if="${isAdvisor}" class="panel p-3 mb-3 advisor-scope-panel" aria-label="Phạm vi tư vấn">
+      <div class="advisor-scope-field">
+        <span class="form-label mb-1">Khoa / đơn vị</span>
+        <div class="advisor-scope-value"><i class="bi bi-lock-fill" aria-hidden="true"></i><span th:text="${currentUser.faculty != null ? currentUser.faculty.name : 'Chưa được gán khoa / đơn vị'}">Khoa Công nghệ Thông tin</span></div>
+      </div>
+      <div class="advisor-scope-field advisor-topics-field">
+        <span class="form-label mb-1">Chuyên đề phụ trách</span>
+        <div class="advisor-scope-value advisor-topic-list" aria-disabled="true">
+          <span class="advisor-topic-chip" th:each="topic : ${topics}" th:text="${topic.name}">Chuyên đề tư vấn</span>
+          <span class="text-muted" th:if="${#lists.isEmpty(topics)}">Chưa được phân công chuyên đề</span>
+        </div>
+      </div>
+    </section>
+    <section th:if="${!isStudent}" class="panel">
+      <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-envelope-exclamation"></i>Chưa trả lời</h2><div class="panel-subtitle" th:text="${isManager ? 'Câu hỏi mới nhất trong tất cả khoa / đơn vị' : 'Câu hỏi mới nhất trong phạm vi khoa của bạn'}">Câu hỏi mới nhất</div></div><span class="count-badge orange" th:text="${unanswered.size()} + ' câu hỏi'">0 câu hỏi</span></div>
+      <div th:if="${#lists.isEmpty(unanswered)}" class="empty-state"><i class="bi bi-inbox"></i><strong>Hộp thư đang trống</strong><p>Các câu hỏi chưa trả lời sẽ xuất hiện ở đây.</p></div>
+      <ul th:unless="${#lists.isEmpty(unanswered)}" class="question-list">
+        <li class="question-row" th:each="q : ${unanswered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi sinh viên</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-open"><i class="bi bi-three-dots"></i> Chưa trả lời</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
+      </ul>
+    </section>
+    <section th:if="${!isStudent}" class="panel">
+      <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-check2-all"></i>Đã trả lời</h2><div class="panel-subtitle">Mở câu hỏi để xem toàn bộ trao đổi</div></div><span class="count-badge" th:text="${answered.size()} + ' câu hỏi'">0 câu hỏi</span></div>
+      <div th:if="${#lists.isEmpty(answered)}" class="empty-state"><i class="bi bi-chat-square-text"></i><strong>Chưa có câu hỏi nào được trả lời</strong><p>Các câu hỏi đã có phản hồi sẽ xuất hiện tại đây.</p></div>
+      <ul th:unless="${#lists.isEmpty(answered)}" class="question-list">
+        <li class="question-row" th:each="q : ${answered}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi đã trả lời</a><div class="question-preview" th:text="${q.body}">Nội dung câu hỏi</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-answered"><i class="bi bi-check-circle-fill"></i> Đã trả lời</span><span class="status-badge visibility-badge" th:if="${q.isReplyNotification()}"><i class="bi bi-bell-fill"></i> Đã thông báo người hỏi</span><span class="status-badge visibility-badge" th:if="${q.isPublic()}"><i class="bi bi-globe2"></i> Công khai</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li>
+      </ul>
+    </section>
+    <section th:if="${isManager}" class="panel">
+      <div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-arrow-left-right"></i>Được chuyển đến khoa</h2><div class="panel-subtitle">Trưởng ban cố vấn có thể mở câu hỏi đã chuyển để phản hồi cho sinh viên</div></div><span class="count-badge" th:text="${transferred.size()} + ' câu hỏi'">0 câu hỏi</span></div>
+      <div th:if="${#lists.isEmpty(transferred)}" class="empty-state"><i class="bi bi-inbox"></i><strong>Chưa có câu hỏi chuyển đến</strong><p>Các câu hỏi được chuyển vào đội ngũ khoa sẽ xuất hiện ở đây.</p></div>
+      <ul th:unless="${#lists.isEmpty(transferred)}" class="question-list"><li class="question-row" th:each="q : ${transferred}"><div><a class="question-title" th:href="@{/questions/{id}(id=${q.id})}" th:text="${q.subject}">Câu hỏi được chuyển</a><div class="question-preview" th:text="${q.body}">Nội dung</div><div class="row-meta"><span class="status-badge visibility-badge" th:if="${q.topic != null}" th:text="${q.topic.name}">Chuyên đề</span><span class="status-badge status-locked"><i class="bi bi-arrow-left-right"></i> Đã chuyển · có thể trả lời</span></div></div><div class="asker-cell"><span class="mini-avatar" th:text="${#strings.substring(q.asker.displayName,0,1)}">L</span><span th:text="${q.asker.displayName}">Sinh viên</span></div><div class="date-cell"><strong th:text="${#temporals.format(q.createdAt,'dd/MM/yyyy')}">16/10/2026</strong><span th:text="${#temporals.format(q.createdAt,'HH:mm')}">08:45</span></div></li></ul>
+    </section>
+  </main>
+  <div th:replace="~{fragments :: footer}"></div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

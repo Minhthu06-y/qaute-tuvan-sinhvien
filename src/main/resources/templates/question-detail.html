@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Chi tiết câu hỏi')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<aside th:replace="~{fragments :: sidebar('questions')}"></aside>
+<div class="page-shell">
+  <main class="page-content">
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="page-heading">
+      <div><div class="eyebrow">Hộp thư tư vấn · <span th:text="${question.faculty.shortName}">CNTT</span></div><h1>Trao đổi câu hỏi</h1><p class="heading-caption">Thông tin người hỏi, chuyên đề và các phản hồi của tư vấn viên.</p></div>
+      <div class="heading-actions"><a class="btn btn-outline-primary btn-sm" th:href="@{/questions}"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a></div>
+    </div>
+    <div class="detail-grid">
+      <section class="mail-card">
+        <div class="mail-toolbar"><ol class="breadcrumb"><li class="breadcrumb-item"><a th:href="@{/questions}">Hộp câu hỏi</a></li><li class="breadcrumb-item active">Chi tiết</li></ol><span class="status-badge" th:classappend="${question.locked ? 'status-locked' : (question.status.name() == 'ANSWERED' ? 'status-answered' : 'status-open')}" th:text="${question.locked ? (isManager ? 'Đã chuyển · có thể trả lời' : 'Đã khóa') : (question.status.name() == 'ANSWERED' ? 'Đã trả lời' : 'Chưa trả lời')}">Chưa trả lời</span></div>
+        <div class="mail-subject" th:text="${question.subject}">Tiêu đề câu hỏi của sinh viên</div>
+        <div class="mail-meta"><span class="mini-avatar" th:text="${hideAskerIdentity ? 'S' : #strings.substring(question.asker.displayName,0,1)}">L</span><div class="mail-meta-main"><span th:text="${hideAskerIdentity ? 'Sinh viên' : question.asker.displayName}">Lê Hoàng Nam</span><small th:unless="${hideAskerIdentity}" th:text="${question.asker.email}">sinhvien@qaute.edu.vn</small></div><div class="mail-time"><span th:text="${#temporals.format(question.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 08:45</span><small class="d-block mt-1">Người hỏi · <span th:text="${question.faculty.name}">Khoa CNTT</span></small></div></div>
+        <div class="mail-body" th:text="${question.body}">Nội dung chi tiết của câu hỏi.</div>
+        <div th:if="${question.attachmentUrl != null}" class="mail-attachment"><i class="bi bi-paperclip me-2"></i><a th:href="${question.attachmentUrl}" target="_blank">Xem tệp đính kèm</a></div>
+        <div class="thread-separator"><i class="bi bi-chat-left-text me-2"></i>PHẢN HỒI <span class="text-muted fw-normal" th:text="'(' + ${answers.size()} + ' tư vấn viên)'">(0 tư vấn viên)</span></div>
+        <div th:if="${#lists.isEmpty(answers)}" class="empty-state"><i class="bi bi-reply"></i><strong>Chưa có phản hồi</strong><p>Tư vấn viên trong đội ngũ có thể gửi câu trả lời tại đây.</p></div>
+        <div th:each="answer : ${answers}" class="reply-item">
+          <div class="reply-head"><span class="mini-avatar" th:text="${#strings.substring(answer.author.displayName,0,1)}">T</span><div class="reply-author"><span th:text="${answer.author.displayName}">Tư vấn viên</span><small th:text="${answer.author.title}">Tư vấn viên khoa CNTT</small></div><div class="reply-time"><span th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 10:30</span><span class="status-badge status-pending ms-2" th:if="${answer.approvalStatus.name() == 'PENDING'}">Chờ duyệt</span><span class="status-badge status-answered ms-2" th:if="${answer.approvalStatus.name() == 'APPROVED'}">Đã duyệt</span></div></div>
+          <div class="reply-body" th:text="${answer.body}">Câu trả lời của tư vấn viên.</div>
+          <div th:if="${answer.reviewReason != null}" class="review-note"><i class="bi bi-info-circle me-1"></i><strong th:text="${answer.approvalStatus.name() == 'APPROVED' ? 'Lý do duyệt: ' : 'Lý do từ chối: '}">Lý do:</strong><span th:text="${answer.reviewReason}"></span></div>
+        </div>
+        <div th:if="${canAnswerQuestion}" class="reply-compose">
+          <div class="d-flex align-items-center gap-2 mb-3"><i class="bi bi-reply-all text-primary"></i><strong style="font-size:12px">Trả lời câu hỏi</strong><span class="text-muted ms-auto" style="font-size:9px">Nhiều tư vấn viên có thể cùng tham gia</span></div>
+          <form th:action="@{/questions/{id}/answers(id=${question.id})}" method="post">
+            <div class="mb-3"><label class="form-label" for="answerBody">Nội dung phản hồi</label><textarea id="answerBody" name="body" class="form-control" rows="5" required placeholder="Viết câu trả lời rõ ràng, dễ hiểu cho sinh viên..."></textarea></div>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2"><div th:if="${isAdvisor}" class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" name="requestApproval" value="true" id="requestApproval"><label class="form-check-label form-hint" for="requestApproval">Xin trưởng ban cố vấn duyệt trước khi gửi người hỏi</label></div><button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send me-1"></i>Gửi phản hồi</button></div>
+          </form>
+        </div>
+      </section>
+      <aside>
+        <section class="side-card"><div class="side-card-title"><i class="bi bi-card-list me-2"></i>THÔNG TIN CÂU HỎI</div><div class="detail-info"><span>Mã câu hỏi</span><strong th:text="'#' + ${question.id}">#1024</strong></div><div class="detail-info"><span>Người hỏi</span><strong th:text="${hideAskerIdentity ? 'Sinh viên' : question.asker.displayName}">Sinh viên</strong></div><div class="detail-info"><span>Thời gian hỏi</span><strong th:text="${#temporals.format(question.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026 08:45</strong></div><div class="detail-info"><span>Đơn vị hiện tại</span><strong th:text="${question.faculty.name}">Khoa CNTT</strong></div><div class="detail-info"><span>Chuyên đề</span><strong th:text="${question.topic != null ? question.topic.name : 'Chưa phân loại'}">Chương trình đào tạo của khoa</strong></div><div class="detail-info"><span>Thông báo phản hồi</span><strong th:text="${question.replyNotification ? 'Đã gửi' : 'Chưa gửi'}">Chưa gửi</strong></div><div th:if="${question.locked}" class="mt-3 alert alert-secondary mb-0 py-2"><i class="bi bi-lock-fill me-1"></i><span th:text="${isManager ? 'Câu hỏi đã chuyển đơn vị. Trưởng ban cố vấn vẫn có thể phản hồi.' : 'Câu hỏi đã chuyển đơn vị nên bị khóa.'}">Câu hỏi đã chuyển đơn vị.</span></div></section>
+        <section th:if="${canManageQuestion}" class="side-card p-0">
+          <ul class="nav nav-tabs action-tabs" role="tablist"><li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#visibility-tab" type="button">Công khai</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#transfer-tab" type="button">Chuyển câu hỏi</button></li></ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active action-pane" id="visibility-tab"><div class="side-card-title"><i class="bi bi-globe2 me-1"></i>QUYỀN HIỂN THỊ</div><p class="form-hint">Câu hỏi công khai có thể xuất hiện trong danh sách tham khảo của sinh viên cùng khoa.</p><div class="switch-block"><div><strong th:text="${question.isPublic() ? 'Đang công khai' : 'Đang riêng tư'}">Đang riêng tư</strong><small>Đổi trạng thái hiển thị câu hỏi</small></div><form th:action="@{/questions/{id}/visibility(id=${question.id})}" method="post"><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" role="switch" id="publicSwitch" th:checked="${question.isPublic()}" onchange="this.form.submit()"><label class="visually-hidden" for="publicSwitch">Công khai câu hỏi</label></div></form></div></div>
+            <div class="tab-pane fade action-pane" id="transfer-tab"><div class="side-card-title"><i class="bi bi-arrow-left-right me-1"></i>CHUYỂN ĐẾN ĐƠN VỊ KHÁC</div><p class="form-hint">Chọn đơn vị tiếp nhận và chuyên đề thuộc đơn vị đó. Khi chuyển thành công, câu hỏi sẽ bị khóa.</p><form th:action="@{/questions/{id}/transfer(id=${question.id})}" method="post">
+              <div class="mb-2"><label class="form-label" for="transferFacultyId">Đơn vị đích</label><select id="transferFacultyId" class="form-select" name="facultyId" required><option value="">Chọn đơn vị</option><option th:each="faculty : ${faculties}" th:if="${faculty.id != question.faculty.id}" th:value="${faculty.id}" th:text="${faculty.name}">Phòng Đào tạo</option></select></div>
+              <div class="mb-3"><label class="form-label">Chuyên đề</label><div id="transferTopicPicker" class="topic-picker" data-topic-selector data-faculty-select="#transferFacultyId"><label th:each="topic : ${topics}" th:if="${topic.faculty.id != question.faculty.id}" class="topic-option" th:attr="data-faculty-id=${topic.faculty.id}" hidden><input class="form-check-input" type="radio" name="topicId" th:value="${topic.id}" required disabled><span><strong th:text="${topic.name}">Chuyên đề</strong><small>Chọn chuyên đề thuộc đơn vị tiếp nhận</small></span></label><p class="topic-picker-hint" data-topic-empty>Chọn đơn vị để xem chuyên đề phù hợp.</p></div></div>
+              <div class="mb-3"><label class="form-label" for="transferReason">Lý do chuyển</label><textarea id="transferReason" name="reason" class="form-control" rows="3" required placeholder="Ví dụ: câu hỏi thuộc lĩnh vực đào tạo..."></textarea></div><button class="btn btn-outline-primary btn-sm w-100" type="submit"><i class="bi bi-send me-1"></i>Chuyển và khóa câu hỏi</button>
+            </form></div>
+          </div>
+        </section>
+        <section th:if="${isStudent}" class="side-card"><div class="side-card-title"><i class="bi bi-bell me-2"></i>THEO DÕI TRẢ LỜI</div><p class="form-hint mb-0" th:text="${question.replyNotification ? 'Đã có phản hồi được gửi đến bạn.' : 'Khi tư vấn viên phản hồi, trạng thái thông báo sẽ cập nhật tại đây.'}">Thông tin thông báo</p></section>
+        <section class="side-card"><div class="side-card-title"><i class="bi bi-lightning-charge me-2"></i>THÔNG BÁO TRỰC TIẾP</div><p class="form-hint mb-0">Trang này nhận thông báo WebSocket khi có câu trả lời hoặc kết quả duyệt mới.</p></section>
+      </aside>
+    </div>
+  </main>
+  <div th:replace="~{fragments :: footer}"></div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

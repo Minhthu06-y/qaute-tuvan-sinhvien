@@ -1,0 +1,91 @@
+body, button, input, select, textarea {
+    font-family: 'Be Vietnam Pro', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+}
+:root{--admin-navy:#123b59;--admin-blue:#0878aa;--admin-canvas:#f2f6f9;--admin-line:#e4ebf0;--admin-muted:#718496;--admin-ink:#24435b}
+*{box-sizing:border-box}body.admin-body{margin:0;background:var(--admin-canvas);color:var(--admin-ink);font-family:'Be Vietnam Pro',Arial,sans-serif;font-size:14px}
+.admin-sidebar{position:fixed;inset:0 auto 0 0;width:250px;background:#102f49;color:#eaf4fa;padding:20px 14px;display:flex;flex-direction:column;z-index:20;overflow:auto}
+.admin-brand{display:flex;align-items:center;gap:11px;color:white;text-decoration:none;padding:4px 8px 22px;font-weight:900;font-size:19px;letter-spacing:.4px}.admin-brand-icon{width:38px;height:38px;display:grid;place-items:center;background:#ffffff18;border:1px solid #ffffff30;border-radius:11px;color:#9ee2ff;font-size:19px}.admin-brand small{display:block;color:#9fb8c9;font-size:8px;letter-spacing:1.3px;margin-top:2px}
+.admin-profile{display:flex;align-items:center;gap:10px;padding:15px 9px;margin-bottom:16px;border-top:1px solid #ffffff20;border-bottom:1px solid #ffffff20}.admin-avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#d9eff9;color:#0d527b;font-weight:800}.admin-profile strong,.admin-profile small{display:block}.admin-profile strong{font-size:11px}.admin-profile small{font-size:8px;color:#a8c5d7;letter-spacing:1px;margin-top:3px}
+.admin-nav{display:flex;flex-direction:column;gap:4px}.admin-nav-label{font-size:8px;color:#89a8bc;font-weight:800;letter-spacing:1px;padding:14px 10px 5px}.admin-nav a,.admin-sidebar-bottom a{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:7px;color:#d7e6ef;font-size:11px;text-decoration:none;transition:.15s}.admin-nav a i,.admin-sidebar-bottom a i{width:17px;text-align:center;font-size:15px}.admin-nav a:hover,.admin-nav a.active,.admin-sidebar-bottom a:hover{background:#ffffff16;color:white}.admin-nav a.active{box-shadow:inset 3px 0 #52c4f0;font-weight:800}.admin-sidebar-bottom{margin-top:auto;border-top:1px solid #ffffff20;padding-top:12px}
+.admin-main{margin-left:250px;min-height:100vh}.admin-topbar{height:72px;background:#fff;border-bottom:1px solid var(--admin-line);display:flex;align-items:center;justify-content:space-between;padding:0 30px}.admin-topbar-eyebrow{display:block;font-size:8px;color:var(--admin-blue);font-weight:800;letter-spacing:1.2px;margin-bottom:3px}.admin-topbar strong{font-size:12px;color:#26465f}.admin-logout{border:1px solid var(--admin-line);border-radius:7px;background:white;color:#536e80;padding:8px 12px;font-size:10px}.admin-logout:hover{background:#f3f8fb;color:#075d88}.admin-content{max-width:1500px;padding:27px 30px 40px;margin:auto}.admin-alerts{padding:0 30px}.admin-page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:22px}.admin-page-heading h1{font-size:23px;font-weight:850;color:#183a55;margin:0}.admin-page-heading p{font-size:11px;color:var(--admin-muted);margin:6px 0 0}.admin-kicker{font-size:9px;letter-spacing:1.2px;color:var(--admin-blue);font-weight:800;text-transform:uppercase;margin-bottom:6px}.admin-actions{display:flex;gap:8px;flex-wrap:wrap}.admin-card{background:#fff;border:1px solid var(--admin-line);border-radius:10px;box-shadow:0 5px 20px #123b5908;margin-bottom:17px;overflow:hidden}.admin-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--admin-line)}.admin-card-head h2{margin:0;font-size:12px;font-weight:800;color:#23435b}.admin-card-head p{font-size:9px;color:var(--admin-muted);margin:4px 0 0}.admin-card-body{padding:17px 18px}.admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:18px}.admin-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--admin-line);border-radius:10px;padding:15px}.admin-stat-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:#e9f5fb;color:#147aaa;font-size:17px}.admin-stat:nth-child(2) .admin-stat-icon{background:#eaf7ef;color:#2b9664}.admin-stat:nth-child(3) .admin-stat-icon{background:#fff4e3;color:#ba791d}.admin-stat:nth-child(4) .admin-stat-icon{background:#f3edfb;color:#7957b5}.admin-stat strong{display:block;font-size:19px;line-height:1.1;color:#1c3c56}.admin-stat small{display:block;color:var(--admin-muted);font-size:9px;margin-top:5px}.admin-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:14px 17px;background:#fff;border:1px solid var(--admin-line);border-radius:9px;margin-bottom:14px}.admin-toolbar .form-label,.admin-form .form-label{font-size:10px;font-weight:700;color:#496578}.admin-toolbar .form-control,.admin-toolbar .form-select,.admin-form .form-control,.admin-form .form-select{min-height:37px;font-size:11px;border-color:#dce5eb}.admin-table-wrap{overflow-x:auto}.admin-table{width:100%;border-collapse:collapse;min-width:760px}.admin-table th{padding:10px 12px;background:#f7fafc;color:#71879a;text-align:left;font-size:8px;letter-spacing:.55px;text-transform:uppercase;white-space:nowrap}.admin-table td{padding:11px 12px;border-top:1px solid #edf1f4;color:#38566b;font-size:10px;vertical-align:middle}.admin-table tr:hover td{background:#fbfdfe}.admin-primary-text{font-weight:750;color:#23445e}.admin-secondary-text{display:block;color:#8697a4;font-size:9px;margin-top:3px}.admin-status{display:inline-flex;padding:4px 8px;border-radius:20px;background:#e7f7ef;color:#238356;font-size:8px;font-weight:800}.admin-status.inactive,.admin-status.disabled{background:#f0f2f4;color:#78848d}.admin-status.pending{background:#fff3df;color:#a96b12}.admin-inline-actions{display:flex;align-items:center;gap:6px}.admin-icon-button{display:inline-grid;place-items:center;width:28px;height:28px;border:1px solid var(--admin-line);border-radius:6px;background:#fff;color:#527085;text-decoration:none;font-size:12px}.admin-icon-button:hover{background:#eef7fb;color:#0875a6}.admin-empty{padding:38px 18px;text-align:center;color:var(--admin-muted);font-size:11px}.admin-empty i{display:block;font-size:25px;color:#9bb9ca;margin-bottom:8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}.admin-tabs a{padding:7px 10px;border:1px solid var(--admin-line);border-radius:20px;background:white;color:#607b8f;text-decoration:none;font-size:9px}.admin-tabs a.active,.admin-tabs a:hover{background:#e7f4fa;color:#086994;border-color:#9ec9dc}.admin-pagination{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;color:var(--admin-muted);font-size:9px}.admin-form{max-width:850px}.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.admin-field-full{grid-column:1/-1}.admin-check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-check-option{display:flex;align-items:flex-start;gap:8px;padding:10px;border:1px solid var(--admin-line);border-radius:7px;font-size:10px;color:#3d5c71}.admin-question-content{white-space:pre-wrap;line-height:1.8;color:#38566b;font-size:11px}.admin-answer-card{padding:14px;border:1px solid var(--admin-line);border-radius:8px;margin-top:10px}.admin-answer-card p{white-space:pre-wrap;font-size:10px;line-height:1.7;color:#456276;margin:9px 0 0}.admin-chart-bars{display:flex;align-items:end;gap:7px;min-height:150px;padding:12px 4px 0}.admin-chart-day{flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;height:145px;gap:5px}.admin-chart-pair{display:flex;align-items:end;gap:3px;height:116px}.admin-chart-bar{width:9px;min-height:2px;border-radius:3px 3px 0 0;background:#58b9df}.admin-chart-bar.answer{background:#60c490}.admin-chart-day small{font-size:7px;color:#8093a1}.admin-legend{display:flex;gap:14px;font-size:8px;color:var(--admin-muted)}.admin-legend span{display:flex;align-items:center;gap:5px}.admin-legend i{width:7px;height:7px;border-radius:2px;background:#58b9df}.admin-legend .answer-key{background:#60c490}
+@media(max-width:1050px){.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-content{padding:22px 18px}.admin-topbar{padding:0 18px}}
+@media(max-width:760px){.admin-sidebar{width:66px;padding:15px 8px}.admin-brand{justify-content:center;padding:4px 0 16px}.admin-brand>span:last-child,.admin-profile,.admin-nav-label{display:none}.admin-nav a{display:flex;justify-content:center;padding:11px 8px;font-size:0}.admin-nav a i{font-size:16px}.admin-nav a.active{font-size:0}.admin-sidebar-bottom a{justify-content:center;font-size:0}.admin-main{margin-left:66px}.admin-content{padding:18px 12px 30px}.admin-topbar{height:62px;padding:0 12px}.admin-topbar strong{font-size:10px}.admin-logout{padding:7px 9px;font-size:0}.admin-logout i{font-size:14px}.admin-page-heading{align-items:flex-start;flex-direction:column}.admin-page-heading h1{font-size:20px}.admin-stats{gap:8px}.admin-stat{padding:11px 9px;gap:8px}.admin-stat-icon{width:33px;height:33px;font-size:14px}.admin-stat strong{font-size:16px}.admin-card-head,.admin-card-body{padding:13px}.admin-form-grid,.admin-check-list{grid-template-columns:1fr}.admin-field-full{grid-column:auto}.admin-alerts{padding:0 12px}}
+/* Cấu hình hiển thị Tooltip khi hover vào cột biểu đồ */
+.admin-chart-day {
+  position: relative;
+  cursor: pointer;
+}
+
+.admin-chart-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+}
+
+/* Tam giác chỉ mũi tên phía dưới Tooltip */
+.admin-chart-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+/* Mở Tooltip khi rê chuột vào khu vực ngày/cột */
+.admin-chart-day:hover .admin-chart-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* Định dạng nội dung bên trong Tooltip */
+.admin-chart-tooltip .tooltip-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #94a3b8;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 3px;
+}
+
+.admin-chart-tooltip .tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.admin-chart-tooltip .tooltip-row .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.admin-chart-tooltip .tooltip-row.q .dot {
+  background-color: #38bdf8; /* Màu xanh dương tương ứng cột câu hỏi */
+}
+
+.admin-chart-tooltip .tooltip-row.a .dot {
+  background-color: #34d399; /* Màu xanh lá tương ứng cột câu trả lời */
+}
+
+.admin-chart-tooltip strong {
+  color: #ffffff;
+  margin-left: auto;
+}

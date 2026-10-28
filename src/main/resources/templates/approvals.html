@@ -1,0 +1,16 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Duyệt câu trả lời')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header><aside th:replace="~{fragments :: sidebar('approvals')}"></aside>
+<div class="page-shell"><main class="page-content"><div th:replace="~{fragments :: alerts}"></div>
+  <div class="page-heading"><div><div class="eyebrow">Khu vực quản lý</div><h1>Duyệt câu trả lời</h1><p class="heading-caption">Xem nội dung, quyết định công khai và ghi lý do để tư vấn viên cùng sinh viên nhận thông báo.</p></div><a th:href="@{/questions}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i>Về hộp câu hỏi</a></div>
+  <section class="panel"><div class="panel-head"><div><h2 class="panel-title"><i class="bi bi-shield-check"></i>Yêu cầu đang chờ</h2><div class="panel-subtitle">Chỉ trưởng ban cố vấn của khoa đang đăng nhập có thể xử lý</div></div><span class="count-badge" th:text="${pendingAnswers.size()} + ' yêu cầu'">0 yêu cầu</span></div>
+    <div th:if="${#lists.isEmpty(pendingAnswers)}" class="empty-state"><i class="bi bi-check2-circle"></i><strong>Không có yêu cầu cần duyệt</strong><p>Các câu trả lời tư vấn viên gửi xin duyệt sẽ xuất hiện ở đây.</p></div>
+    <div th:each="answer : ${pendingAnswers}" class="approval-card">
+      <div class="d-flex align-items-start gap-2"><span class="status-badge status-pending">Chờ duyệt</span><span class="text-muted ms-auto" style="font-size:10px" th:text="${#temporals.format(answer.createdAt,'dd/MM/yyyy HH:mm')}">16/10/2026</span></div>
+      <a class="approval-question d-block mt-3" th:href="@{/questions/{id}(id=${answer.question.id})}" th:text="${answer.question.subject}">Câu hỏi của sinh viên</a>
+      <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:10px;color:#74869a"><span><i class="bi bi-person me-1"></i><span th:text="${answer.question.asker.displayName}">Người hỏi</span></span><span><i class="bi bi-chat-square-text me-1"></i><span th:text="${answer.author.displayName}">Người trả lời</span></span><span><i class="bi bi-building me-1"></i><span th:text="${answer.question.faculty.name}">Khoa</span></span></div>
+      <div class="approval-answer" th:text="${answer.body}">Nội dung câu trả lời</div>
+      <form th:action="@{/manager/answers/{id}/review(id=${answer.id})}" method="post" class="row g-2 align-items-end"><div class="col-md-8"><label class="form-label" th:for="'reason-' + ${answer.id}">Lý do duyệt / từ chối <span class="text-danger">*</span></label><textarea class="form-control" rows="2" name="reason" th:id="'reason-' + ${answer.id}" required placeholder="Giải thích ngắn gọn để tư vấn viên và sinh viên hiểu quyết định..."></textarea></div><div class="col-md-4 d-flex gap-2"><button class="btn btn-primary btn-sm flex-fill" name="approved" value="true" type="submit"><i class="bi bi-check-lg me-1"></i>Duyệt</button><button class="btn btn-outline-danger btn-sm flex-fill" name="approved" value="false" type="submit"><i class="bi bi-x-lg me-1"></i>Từ chối</button></div></form>
+    </div>
+  </section>
+</main><div th:replace="~{fragments :: footer}"></div></div><div th:replace="~{fragments :: scripts}"></div></body></html>

@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Đăng ký')}"></head>
+
+<body class="auth-page">
+<div class="auth-card">
+
+    <div class="auth-card-head">
+        <div class="auth-logo">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <h1>TẠO TÀI KHOẢN QAUTE</h1>
+        <p>QAUTE • NHÓM 4</p>
+    </div>
+
+    <div class="auth-card-body">
+
+        <div th:if="${error}"
+             class="alert alert-danger py-2"
+             th:text="${error}"></div>
+
+        <h2 style="font-size:17px;font-weight:800;margin-bottom:5px">
+            Đăng ký tài khoản
+        </h2>
+
+        <p class="text-muted"
+           style="font-size:12px;margin-bottom:18px">
+            Vui lòng nhập thông tin và xác minh email bằng OTP.
+        </p>
+
+        <form th:action="@{/register}"
+              method="post"
+              id="registerForm">
+
+            <!-- HỌ TÊN -->
+            <div class="mb-3">
+                <label for="displayName" class="form-label">
+                    Họ và tên *
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="displayName"
+                       name="displayName"
+                       required
+                       maxlength="120"
+                       autocomplete="name"
+                       placeholder="Nguyễn Văn A">
+            </div>
+
+            <!-- NGÀY SINH -->
+            <div class="mb-3">
+                <label for="birthDate" class="form-label">
+                    Ngày sinh *
+                </label>
+                <input type="date"
+                       class="form-control"
+                       id="birthDate"
+                       name="birthDate"
+                       required>
+                <div class="form-text">
+                    Ngày sinh không được lớn hơn ngày hiện tại.
+                </div>
+            </div>
+
+            <!-- CÓ PHẢI SINH VIÊN TRƯỜNG -->
+            <div class="mb-3">
+                <label class="form-label d-block">
+                    Bạn có phải sinh viên của trường? *
+                </label>
+
+                <div class="d-flex gap-4">
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               id="isStudentYes"
+                               name="isQauteStudent"
+                               value="true"
+                               required>
+                        <label class="form-check-label"
+                               for="isStudentYes">Có</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               id="isStudentNo"
+                               name="isQauteStudent"
+                               value="false"
+                               required>
+                        <label class="form-check-label"
+                               for="isStudentNo">Không</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NHÓM THÔNG TIN SINH VIÊN / CỰU SINH VIÊN -->
+            <div id="studentTypeSection" hidden>
+
+                <div class="mb-3">
+                    <label class="form-label d-block">
+                        Bạn là *
+                    </label>
+
+                    <div class="d-flex gap-4 flex-wrap">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="radio"
+                                   id="typeStudying"
+                                   name="studyStatus"
+                                   value="STUDYING">
+                            <label class="form-check-label"
+                                   for="typeStudying">
+                                Sinh viên
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="radio"
+                                   id="typeGraduated"
+                                   name="studyStatus"
+                                   value="GRADUATED">
+                            <label class="form-check-label"
+                                   for="typeGraduated">
+                                Cựu sinh viên
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MSSV: DÙNG CHO CẢ SINH VIÊN VÀ CỰU SINH VIÊN -->
+                <div class="mb-3" id="studentIdField" hidden>
+                    <label for="studentId" class="form-label">
+                        Mã số sinh viên *
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="studentId"
+                           name="studentId"
+                           maxlength="30"
+                           placeholder="Nhập mã số sinh viên">
+                </div>
+
+                <!-- NGÀY CẤP BẰNG: CHỈ CỰU SINH VIÊN -->
+                <div class="mb-3" id="graduationDateField" hidden>
+                    <label for="graduationDate" class="form-label">
+                        Ngày cấp bằng tốt nghiệp *
+                    </label>
+                    <input type="date"
+                           class="form-control"
+                           id="graduationDate"
+                           name="graduationDate">
+                    <div class="form-text">
+                        Ngày cấp bằng không được lớn hơn ngày hiện tại.
+                    </div>
+                </div>
+
+                <!-- KHOA: CHỈ SINH VIÊN / CỰU SINH VIÊN -->
+                <div class="mb-3" id="facultyField" hidden>
+                    <label for="facultyId" class="form-label">
+                        Khoa *
+                    </label>
+                    <select class="form-select"
+                            id="facultyId"
+                            name="facultyId">
+                        <option value="">-- Chọn khoa --</option>
+                        <option th:each="faculty : ${faculties}"
+                                th:value="${faculty.id}"
+                                th:text="${faculty.name}">
+                            Khoa CNTT
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- EMAIL: DÙNG CHUNG MỘT FIELD, ĐỔI NHÃN THEO LOẠI -->
+            <div class="mb-3">
+                <label for="email"
+                       class="form-label"
+                       id="emailLabel">
+                    Email cá nhân *
+                </label>
+                <input type="email"
+                       class="form-control"
+                       id="email"
+                       name="email"
+                       required
+                       maxlength="254"
+                       autocomplete="email"
+                       placeholder="example@gmail.com">
+                <div class="form-text" id="emailHelp">
+                    Bạn có thể sử dụng email cá nhân.
+                </div>
+            </div>
+
+            <!-- SỐ ĐIỆN THOẠI -->
+            <div class="mb-3">
+                <label for="phone" class="form-label">
+                    Số điện thoại *
+                </label>
+                <input type="tel"
+                       class="form-control"
+                       id="phone"
+                       name="phone"
+                       required
+                       maxlength="15"
+                       pattern="(\+84|84|0)[0-9]{9,10}"
+                       title="Nhập số điện thoại hợp lệ, ví dụ 0912345678 hoặc +84912345678"
+                       autocomplete="tel"
+                       placeholder="0912345678">
+            </div>
+
+            <!-- MẬT KHẨU -->
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    Mật khẩu *
+                </label>
+                <input type="password"
+                       class="form-control"
+                       id="password"
+                       name="password"
+                       required
+                       minlength="8"
+                       maxlength="72"
+                       autocomplete="new-password"
+                       pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s]).{8,}"
+                       title="Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+                       placeholder="Nhập mật khẩu">
+                <div class="form-text">
+                    Ít nhất 8 ký tự, gồm chữ hoa, chữ thường,
+                    chữ số và ký tự đặc biệt.
+                </div>
+            </div>
+
+            <!-- XÁC NHẬN MẬT KHẨU -->
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">
+                    Xác nhận mật khẩu *
+                </label>
+                <input type="password"
+                       class="form-control"
+                       id="confirmPassword"
+                       name="confirmPassword"
+                       required
+                       minlength="8"
+                       maxlength="72"
+                       autocomplete="new-password"
+                       placeholder="Nhập lại mật khẩu">
+            </div>
+
+            <!-- GỬI OTP -->
+            <button class="btn btn-primary w-100 mt-2"
+                    type="submit">
+                <i class="bi bi-envelope-check me-2"></i>
+                Gửi mã OTP
+            </button>
+
+        </form>
+
+        <div class="auth-footer">
+            Đã có tài khoản?
+            <a th:href="@{/login}">Đăng nhập</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("registerForm");
+
+    const yesRadio = document.getElementById("isStudentYes");
+    const noRadio = document.getElementById("isStudentNo");
+
+    const studentTypeSection =
+        document.getElementById("studentTypeSection");
+    const studyingRadio = document.getElementById("typeStudying");
+    const graduatedRadio = document.getElementById("typeGraduated");
+
+    const studentIdField = document.getElementById("studentIdField");
+    const studentId = document.getElementById("studentId");
+
+    const graduationDateField =
+        document.getElementById("graduationDateField");
+    const graduationDate = document.getElementById("graduationDate");
+
+    const facultyField = document.getElementById("facultyField");
+    const facultyId = document.getElementById("facultyId");
+
+    const email = document.getElementById("email");
+    const emailLabel = document.getElementById("emailLabel");
+    const emailHelp = document.getElementById("emailHelp");
+
+    const birthDate = document.getElementById("birthDate");
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirmPassword");
+
+    // Ngày hiện tại theo múi giờ địa phương.
+    const now = new Date();
+    const today = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+    ].join("-");
+
+    birthDate.max = today;
+    graduationDate.max = today;
+
+    // Ẩn/hiện vùng thông tin và vô hiệu hóa field không sử dụng.
+    function setSectionEnabled(section, enabled) {
+        section.hidden = !enabled;
+
+        section.querySelectorAll("input, select, textarea")
+            .forEach(function (field) {
+                field.disabled = !enabled;
+            });
+    }
+
+    function updateEmail() {
+        const isStudent = yesRadio.checked;
+        const isExternal = noRadio.checked;
+        const isGraduated = graduatedRadio.checked;
+
+        if (isStudent && isGraduated) {
+            emailLabel.textContent = "Email cá nhân *";
+            emailHelp.textContent =
+                "Cựu sinh viên có thể sử dụng email cá nhân.";
+            email.placeholder = "example@gmail.com";
+        } else if (isStudent) {
+            emailLabel.textContent = "Email trường *";
+            emailHelp.textContent =
+                "Sinh viên đang học phải sử dụng email do trường cấp.";
+            email.placeholder = "mssv@student.hcmute.edu.vn";
+        } else if (isExternal) {
+            emailLabel.textContent = "Email cá nhân *";
+            emailHelp.textContent =
+                "Bạn có thể sử dụng email cá nhân.";
+            email.placeholder = "example@gmail.com";
+        } else {
+            emailLabel.textContent = "Email *";
+            emailHelp.textContent =
+                "Chọn loại tài khoản để xem yêu cầu email.";
+        }
+    }
+
+    function updateStudentType() {
+        const isStudent = yesRadio.checked;
+        const isStudying = studyingRadio.checked;
+        const isGraduated = graduatedRadio.checked;
+        const isInternalTypeSelected = isStudying || isGraduated;
+
+        setSectionEnabled(studentTypeSection, isStudent);
+
+        const showStudentId = isStudent && isInternalTypeSelected;
+        const showFaculty = isStudent && isInternalTypeSelected;
+        const showGraduationDate = isStudent && isGraduated;
+
+        setSectionEnabled(studentIdField, showStudentId);
+        setSectionEnabled(facultyField, showFaculty);
+        setSectionEnabled(graduationDateField, showGraduationDate);
+
+        studentId.required = showStudentId;
+        facultyId.required = showFaculty;
+        graduationDate.required = showGraduationDate;
+
+        // Khi không còn là cựu sinh viên, xóa ngày cấp bằng.
+        if (!showGraduationDate) {
+            graduationDate.value = "";
+        }
+
+        // Khi chọn Không, xóa lựa chọn loại sinh viên và MSSV.
+        if (!isStudent) {
+            studyingRadio.checked = false;
+            graduatedRadio.checked = false;
+            studentId.value = "";
+            facultyId.value = "";
+        }
+
+        updateEmail();
+    }
+
+    yesRadio.addEventListener("change", updateStudentType);
+    noRadio.addEventListener("change", updateStudentType);
+    studyingRadio.addEventListener("change", updateStudentType);
+    graduatedRadio.addEventListener("change", updateStudentType);
+
+    // Kiểm tra hai mật khẩu khớp nhau.
+    function validateConfirmPassword() {
+        confirmPassword.setCustomValidity(
+            password.value === confirmPassword.value
+                ? ""
+                : "Mật khẩu xác nhận không khớp."
+        );
+    }
+
+    password.addEventListener("input", validateConfirmPassword);
+    confirmPassword.addEventListener("input", validateConfirmPassword);
+
+    function validateDates() {
+        birthDate.setCustomValidity(
+            !birthDate.value || birthDate.value <= today
+                ? ""
+                : "Ngày sinh không được lớn hơn ngày hiện tại."
+        );
+
+        graduationDate.setCustomValidity(
+            !graduationDate.value || graduationDate.value <= today
+                ? ""
+                : "Ngày cấp bằng không được lớn hơn ngày hiện tại."
+        );
+    }
+
+    birthDate.addEventListener("change", validateDates);
+    graduationDate.addEventListener("change", validateDates);
+
+    form.addEventListener("submit", function (event) {
+        updateStudentType();
+        validateConfirmPassword();
+        validateDates();
+
+        const isStudent = yesRadio.checked;
+        const isExternal = noRadio.checked;
+        const isStudying = studyingRadio.checked;
+        const isGraduated = graduatedRadio.checked;
+        const emailValue = email.value.trim().toLowerCase();
+
+        if (!isStudent && !isExternal) {
+            event.preventDefault();
+            alert("Vui lòng chọn Có hoặc Không.");
+            return;
+        }
+
+        if (isStudent && !isStudying && !isGraduated) {
+            event.preventDefault();
+            alert("Vui lòng chọn Sinh viên hoặc Cựu sinh viên.");
+            return;
+        }
+
+        /*
+         * Thay bằng domain email thật của trường sau khi xác nhận.
+         * Ví dụ bên dưới chỉ là minh họa, không mặc định là domain thật.
+         */
+        const schoolEmailDomain = "@student.hcmute.edu.vn";
+
+        if (isStudent && isStudying) {
+            if (!emailValue.endsWith(schoolEmailDomain)) {
+                event.preventDefault();
+
+                email.setCustomValidity(
+                    "Sinh viên đang học phải sử dụng email có đuôi @student.hcmute.edu.vn."
+                );
+
+                email.reportValidity();
+                email.setCustomValidity("");
+                email.focus();
+                return;
+            }
+        }
+
+        if (isGraduated && !graduationDate.value) {
+            event.preventDefault();
+            graduationDate.setCustomValidity(
+                "Vui lòng nhập ngày cấp bằng tốt nghiệp."
+            );
+            graduationDate.reportValidity();
+            graduationDate.setCustomValidity("");
+            return;
+        }
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+        }
+    });
+
+    email.addEventListener("input", function () {
+        email.setCustomValidity("");
+    });
+
+    updateStudentType();
+});
+</script>
+
+</body>
+</html>
