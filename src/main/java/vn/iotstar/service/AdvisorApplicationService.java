@@ -114,9 +114,8 @@ public class AdvisorApplicationService {
         notifications.notifyAdmins("advisor-application",
                 "Manager đã duyệt hồ sơ tư vấn viên; đang chờ admin cấp quyền.",
                 "/admin/advisor-applications");
-        notifications.notify(applicant,
-                "Manager đã duyệt hồ sơ. Yêu cầu đang chờ admin cấp quyền tư vấn viên.",
-                "/advisor-application");
+        notifications.notifyUser(applicant.getId(), "advisor-application",
+                "Manager đã duyệt hồ sơ. Yêu cầu đang chờ admin cấp quyền tư vấn viên.", null);
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "MANAGER_APPROVE_ADVISOR_APPLICATION", applicant.getEmail());
     }
 
@@ -129,8 +128,8 @@ public class AdvisorApplicationService {
         if (note == null || note.isBlank())
             throw new FieldException("reviewNote", "Nhập lý do từ chối để người gửi biết cần bổ sung gì");
         finish(application, reviewer, AdvisorApplicationStatus.REJECTED, note.trim());
-        notifications.notify(application.getApplicant(), "Yêu cầu làm tư vấn viên chưa được duyệt: " + note.trim(),
-                "/advisor-application");
+        notifications.notifyUser(application.getApplicant().getId(), "advisor-application",
+                "Yêu cầu làm tư vấn viên chưa được duyệt: " + note.trim(), null);
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "MANAGER_REJECT_ADVISOR_APPLICATION", application.getApplicant().getEmail());
     }
 
@@ -146,7 +145,8 @@ public class AdvisorApplicationService {
                 application.getAdvisorType(), application.getAudience());
         finish(application, reviewer, AdvisorApplicationStatus.APPROVED,
                 "Admin đã cấp quyền tư vấn viên sau khi manager duyệt hồ sơ.");
-        notifications.notify(applicant, "Admin đã cấp quyền tư vấn viên cho tài khoản của bạn.", "/questions");
+        notifications.notifyUser(applicant.getId(), "advisor-application",
+                "Admin đã cấp quyền tư vấn viên cho tài khoản của bạn.", null);
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "GRANT_ADVISOR_ROLE", applicant.getEmail());
     }
 
@@ -157,8 +157,8 @@ public class AdvisorApplicationService {
         if (note == null || note.isBlank())
             throw new FieldException("reviewNote", "Nhập lý do từ chối để người gửi biết cần bổ sung gì");
         finish(application, reviewer, AdvisorApplicationStatus.REJECTED, note.trim());
-        notifications.notify(application.getApplicant(),
-                "Admin chưa cấp quyền tư vấn viên: " + note.trim(), "/advisor-application");
+        notifications.notifyUser(application.getApplicant().getId(), "advisor-application",
+                "Admin chưa cấp quyền tư vấn viên: " + note.trim(), null);
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "ADMIN_REJECT_ADVISOR_APPLICATION",
                 application.getApplicant().getEmail());
     }
