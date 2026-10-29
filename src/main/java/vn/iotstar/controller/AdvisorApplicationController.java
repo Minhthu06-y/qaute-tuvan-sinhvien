@@ -48,8 +48,8 @@ public class AdvisorApplicationController {
         if (!binding.hasErrors()) {
             try {
                 applications.submit(viewer.user(), form);
-                flash.addFlashAttribute("success", "Đăng ký thành công. Tài khoản đã được cập nhật vai trò và quyền tư vấn viên.");
-                return "redirect:/account";
+                flash.addFlashAttribute("success", "Đăng ký thành công. Yêu cầu đang chờ manager hoặc admin duyệt; quyền tư vấn viên sẽ được cấp sau khi duyệt.");
+                return "redirect:/advisor-application";
             } catch (FieldException error) {
                 binding.rejectValue(error.getField(), "custom", error.getMessage());
             }

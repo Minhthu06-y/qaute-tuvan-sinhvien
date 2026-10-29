@@ -76,16 +76,12 @@ public class AdvisorApplicationService {
         application.setAudience(form.getAudience());
         application.setMotivation(form.getMotivation() == null ? null : form.getMotivation().trim());
         if (form.getPhone() != null && !form.getPhone().isBlank()) applicant.setPhone(form.getPhone().trim());
-        activateApplicant(applicant, faculty, department, topic, form.getAdvisorType(), form.getAudience());
-        application.setStatus(AdvisorApplicationStatus.APPROVED);
-        application.setReviewNote("Tài khoản đã được kích hoạt quyền tư vấn viên khi đăng ký.");
-        application.setReviewedAt(LocalDateTime.now());
         AdvisorApplication saved = applications.save(application);
         notifications.notifyManagers(faculty.getId(), "advisor-application",
-                "Tư vấn viên mới đã được kích hoạt.", null, "/manager/advisors");
-        notifications.notifyAdmins("advisor-registration", "Tư vấn viên mới đã được kích hoạt.",
-                "/admin/advisors");
-        logs.log(applicant.getEmail(), Role.USER.name(), "REGISTER_ADVISOR", applicant.getEmail());
+                "Có yêu cầu đăng ký tư vấn viên mới cần duyệt.", null, "/manager/advisor-applications");
+        notifications.notifyAdmins("advisor-application", "Có yêu cầu đăng ký tư vấn viên mới cần duyệt.",
+                "/admin/advisor-applications");
+        logs.log(applicant.getEmail(), Role.USER.name(), "SUBMIT_ADVISOR_APPLICATION", applicant.getEmail());
         return saved;
     }
 

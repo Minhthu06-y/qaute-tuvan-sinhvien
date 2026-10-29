@@ -6,11 +6,11 @@
 <aside th:replace="~{fragments :: sidebar('advisor-application')}"></aside>
 <div class="page-shell"><main class="page-content">
   <div th:replace="~{fragments :: alerts}"></div>
-  <div class="page-heading"><div><div class="eyebrow">Đội ngũ QAUTE</div><h1>Đăng ký làm tư vấn viên</h1><p class="heading-caption" th:if="${latestApplication != null && latestApplication.status.name() == 'PENDING'}">Manager của khoa / đơn vị đang xem xét yêu cầu này.</p><p class="heading-caption" th:unless="${latestApplication != null && latestApplication.status.name() == 'PENDING'}">Sau khi đăng ký, vai trò và quyền tư vấn viên sẽ được cập nhật ngay.</p></div></div>
+  <div class="page-heading"><div><div class="eyebrow">Đội ngũ QAUTE</div><h1>Đăng ký làm tư vấn viên</h1><p class="heading-caption" th:if="${latestApplication != null && latestApplication.status.name() == 'PENDING'}">Manager phụ trách khoa / đơn vị hoặc admin đang xem xét yêu cầu này.</p><p class="heading-caption" th:unless="${latestApplication != null && latestApplication.status.name() == 'PENDING'}">Yêu cầu sẽ được manager hoặc admin duyệt. Tài khoản chỉ được cấp quyền tư vấn viên sau khi được duyệt.</p></div></div>
   <section th:if="${latestApplication != null}" class="mail-card p-4 mb-3">
     <h2 class="h5">Yêu cầu gần nhất</h2>
     <p class="mb-2">Khoa / đơn vị: <strong th:text="${latestApplication.department != null ? latestApplication.department.name : 'Chưa phân khoa'}">Khoa</strong> · Chức danh: <strong th:text="${latestApplication.advisorType != null ? latestApplication.advisorType.label : 'Tư vấn viên'}">Tư vấn viên</strong></p>
-    <p class="mb-2">Trạng thái: <span class="status-badge" th:text="${latestApplication.status}">PENDING</span></p>
+    <p class="mb-2">Trạng thái: <span class="status-badge" th:text="${latestApplication.status.name() == 'PENDING' ? 'Đang chờ duyệt' : (latestApplication.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Chưa được duyệt')}">Đang chờ duyệt</span></p>
     <p class="mb-0" th:if="${latestApplication.reviewNote != null}" th:text="${latestApplication.reviewNote}">Ghi chú duyệt</p>
   </section>
   <section th:if="${latestApplication == null || latestApplication.status.name() != 'PENDING'}" class="mail-card p-4">
