@@ -1,6 +1,8 @@
 package vn.iotstar.service;
 
 import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -20,16 +22,23 @@ public class DeletedAccountEmailService {
         String normalizedEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         if (normalizedEmail.isEmpty()) return;
 
-        User user = users.findByEmailIgnoreCase(normalizedEmail)
-                .or(() -> users.findByDeletedEmailIgnoreCase(normalizedEmail))
-                .orElse(null);
-        if (user == null || !user.isDeleted()) return;
+        Map<Long, User> deletedAccounts = new LinkedHashMap<>();
+        users.findByEmailIgnoreCase(normalizedEmail)
+                .filter(User::isDeleted)
+                .ifPresent(user -> deletedAccounts.put(user.getId(), user));
+        users.findAllByDeletedEmailIgnoreCase(normalizedEmail).stream()
+                .filter(User::isDeleted)
+                .forEach(user -> deletedAccounts.putIfAbsent(user.getId(), user));
 
-        if (user.getDeletedEmail() == null || user.getDeletedEmail().isBlank()) {
-            user.setDeletedEmail(user.getEmail());
+        if (deletedAccounts.isEmpty()) return;
+
+        for (User user : deletedAccounts.values()) {
+            if (user.getDeletedEmail() == null || user.getDeletedEmail().isBlank()) {
+                user.setDeletedEmail(user.getEmail());
+            }
+            user.setEmail(tombstoneEmail(user.getId()));
         }
-        user.setEmail(tombstoneEmail(user.getId()));
-        users.saveAndFlush(user);
+        users.saveAllAndFlush(deletedAccounts.values());
     }
 
     public String tombstoneEmail(String source, Long id) {
