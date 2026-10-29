@@ -55,9 +55,7 @@ public class AdvisorApplicationService {
         if (profiles.findByUserId(applicant.getId()).filter(profile -> !profile.isDeleted()).isPresent())
             throw new FieldException("advisorType", "Tài khoản đã có hồ sơ tư vấn viên");
         if (applications.findFirstByApplicantIdAndStatusOrderByCreatedAtDesc(
-                    applicant.getId(), AdvisorApplicationStatus.PENDING).isPresent()
-                || applications.findFirstByApplicantIdAndStatusOrderByCreatedAtDesc(
-                    applicant.getId(), AdvisorApplicationStatus.MANAGER_APPROVED).isPresent())
+                applicant.getId(), AdvisorApplicationStatus.PENDING).isPresent())
             throw new FieldException("departmentId", "Bạn đã có yêu cầu đang chờ duyệt");
         if (form.getAdvisorType() == AdvisorType.TEAM_LEADER)
             throw new FieldException("advisorType", "Chọn chức danh tư vấn viên phù hợp");
@@ -89,23 +87,29 @@ public class AdvisorApplicationService {
     public List<AdvisorApplication> pendingForManager(String managerEmail) {
         Set<Long> allowed = scope.managerDepartments(managerEmail);
         return applications.findByStatusOrderByCreatedAtAsc(AdvisorApplicationStatus.PENDING).stream()
+                .filter(application -> application.getReviewer() == null)
                 .filter(application -> ScopeService.allows(allowed, application.getDepartment()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<AdvisorApplication> approvedByManagersForAdmin() {
-        return applications.findByStatusOrderByCreatedAtAsc(AdvisorApplicationStatus.MANAGER_APPROVED);
+    public List<AdvisorApplication> awaitingAdminGrant() {
+        return applications.findByStatusOrderByCreatedAtAsc(AdvisorApplicationStatus.PENDING).stream()
+                .filter(application -> application.getReviewer() != null
+                        && application.getReviewer().getRole() == Role.MANAGER)
+                .toList();
     }
 
     @Transactional
     public void approveByManager(Long id, String managerEmail) {
         User reviewer = getReviewer(managerEmail, Role.MANAGER);
         AdvisorApplication application = getForReviewer(id, reviewer, AdvisorApplicationStatus.PENDING);
+        if (application.getReviewer() != null)
+            throw new IllegalArgumentException("Hồ sơ này đã được manager duyệt và chuyển sang admin");
         User applicant = application.getApplicant();
         if (applicant.getRole() != Role.USER)
             throw new FieldException("decision", "Tài khoản không còn đủ điều kiện làm tư vấn viên");
-        finish(application, reviewer, AdvisorApplicationStatus.MANAGER_APPROVED,
+        finish(application, reviewer, AdvisorApplicationStatus.PENDING,
                 "Manager đã duyệt hồ sơ và chuyển admin cấp quyền.");
         notifications.notifyAdmins("advisor-application",
                 "Manager đã duyệt hồ sơ tư vấn viên; đang chờ admin cấp quyền.",
@@ -120,6 +124,8 @@ public class AdvisorApplicationService {
     public void rejectByManager(Long id, String managerEmail, String note) {
         User reviewer = getReviewer(managerEmail, Role.MANAGER);
         AdvisorApplication application = getForReviewer(id, reviewer, AdvisorApplicationStatus.PENDING);
+        if (application.getReviewer() != null)
+            throw new IllegalArgumentException("Hồ sơ này đã được manager duyệt và chuyển sang admin");
         if (note == null || note.isBlank())
             throw new FieldException("reviewNote", "Nhập lý do từ chối để người gửi biết cần bổ sung gì");
         finish(application, reviewer, AdvisorApplicationStatus.REJECTED, note.trim());
@@ -131,7 +137,7 @@ public class AdvisorApplicationService {
     @Transactional
     public void grantByAdmin(Long id, String adminEmail) {
         User reviewer = getReviewer(adminEmail, Role.ADMIN);
-        AdvisorApplication application = getForReviewer(id, reviewer, AdvisorApplicationStatus.MANAGER_APPROVED);
+        AdvisorApplication application = getAwaitingAdminGrant(id);
         User applicant = application.getApplicant();
         if (applicant.getRole() != Role.USER)
             throw new FieldException("decision", "Tài khoản không còn đủ điều kiện làm tư vấn viên");
@@ -147,7 +153,7 @@ public class AdvisorApplicationService {
     @Transactional
     public void rejectByAdmin(Long id, String adminEmail, String note) {
         User reviewer = getReviewer(adminEmail, Role.ADMIN);
-        AdvisorApplication application = getForReviewer(id, reviewer, AdvisorApplicationStatus.MANAGER_APPROVED);
+        AdvisorApplication application = getAwaitingAdminGrant(id);
         if (note == null || note.isBlank())
             throw new FieldException("reviewNote", "Nhập lý do từ chối để người gửi biết cần bổ sung gì");
         finish(application, reviewer, AdvisorApplicationStatus.REJECTED, note.trim());
@@ -173,6 +179,16 @@ public class AdvisorApplicationService {
         if (reviewer.getRole() == Role.MANAGER
                 && !ScopeService.allows(scope.managerDepartments(reviewer.getEmail()), application.getDepartment()))
             throw new AccessDeniedException("Yêu cầu không thuộc khoa bạn phụ trách");
+        return application;
+    }
+
+    private AdvisorApplication getAwaitingAdminGrant(Long id) {
+        AdvisorApplication application = applications.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu tư vấn viên"));
+        if (application.getStatus() != AdvisorApplicationStatus.PENDING
+                || application.getReviewer() == null
+                || application.getReviewer().getRole() != Role.MANAGER)
+            throw new IllegalArgumentException("Hồ sơ chưa được manager duyệt để chuyển admin cấp quyền");
         return application;
     }
 

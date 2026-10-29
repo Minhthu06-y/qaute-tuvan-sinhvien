@@ -25,7 +25,7 @@ public class AdminAdvisorApplicationController {
 
     @GetMapping
     public String page(Model model) {
-        model.addAttribute("applications", applications.approvedByManagersForAdmin());
+        model.addAttribute("applications", applications.awaitingAdminGrant());
         return "admin/advisor-applications";
     }
 
