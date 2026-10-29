@@ -25,15 +25,15 @@ public class AdminAdvisorApplicationController {
 
     @GetMapping
     public String page(Model model) {
-        model.addAttribute("applications", applications.pendingForAdmin());
+        model.addAttribute("applications", applications.approvedByManagersForAdmin());
         return "admin/advisor-applications";
     }
 
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, Principal principal, RedirectAttributes flash) {
         try {
-            applications.approve(id, principal.getName());
-            flash.addFlashAttribute("msg", "Đã duyệt tư vấn viên và gán vào khoa.");
+            applications.grantByAdmin(id, principal.getName());
+            flash.addFlashAttribute("msg", "Đã cấp quyền tư vấn viên cho tài khoản.");
         } catch (FieldException error) {
             flash.addFlashAttribute("err", error.getMessage());
         }
@@ -44,8 +44,8 @@ public class AdminAdvisorApplicationController {
     public String reject(@PathVariable Long id, @RequestParam @NotBlank String reviewNote,
             Principal principal, RedirectAttributes flash) {
         try {
-            applications.reject(id, principal.getName(), reviewNote);
-            flash.addFlashAttribute("msg", "Đã gửi kết quả từ chối cho người đăng ký.");
+            applications.rejectByAdmin(id, principal.getName(), reviewNote);
+            flash.addFlashAttribute("msg", "Đã từ chối cấp quyền và gửi kết quả cho người đăng ký.");
         } catch (FieldException error) {
             flash.addFlashAttribute("err", error.getMessage());
         }

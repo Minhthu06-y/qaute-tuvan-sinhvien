@@ -32,8 +32,8 @@ public class ManagerAdvisorApplicationController {
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, Principal principal, RedirectAttributes flash) {
         try {
-            applications.approve(id, principal.getName());
-            flash.addFlashAttribute("msg", "Đã duyệt tư vấn viên và gán vào khoa.");
+            applications.approveByManager(id, principal.getName());
+            flash.addFlashAttribute("msg", "Đã duyệt hồ sơ và chuyển admin cấp quyền tư vấn viên.");
         } catch (FieldException error) {
             flash.addFlashAttribute("err", error.getMessage());
         }
@@ -44,8 +44,8 @@ public class ManagerAdvisorApplicationController {
     public String reject(@PathVariable Long id, @RequestParam @NotBlank String reviewNote,
             Principal principal, RedirectAttributes flash) {
         try {
-            applications.reject(id, principal.getName(), reviewNote);
-            flash.addFlashAttribute("msg", "Đã gửi kết quả từ chối cho người đăng ký.");
+            applications.rejectByManager(id, principal.getName(), reviewNote);
+            flash.addFlashAttribute("msg", "Đã từ chối hồ sơ và gửi kết quả cho người đăng ký.");
         } catch (FieldException error) {
             flash.addFlashAttribute("err", error.getMessage());
         }
