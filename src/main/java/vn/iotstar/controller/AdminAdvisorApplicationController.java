@@ -36,6 +36,8 @@ public class AdminAdvisorApplicationController {
             flash.addFlashAttribute("msg", "Đã cấp quyền tư vấn viên cho tài khoản.");
         } catch (FieldException error) {
             flash.addFlashAttribute("err", error.getMessage());
+        } catch (IllegalArgumentException error) {
+            flash.addFlashAttribute("err", error.getMessage());
         }
         return "redirect:/admin/advisor-applications";
     }
@@ -47,6 +49,8 @@ public class AdminAdvisorApplicationController {
             applications.rejectByAdmin(id, principal.getName(), reviewNote);
             flash.addFlashAttribute("msg", "Đã từ chối cấp quyền và gửi kết quả cho người đăng ký.");
         } catch (FieldException error) {
+            flash.addFlashAttribute("err", error.getMessage());
+        } catch (IllegalArgumentException error) {
             flash.addFlashAttribute("err", error.getMessage());
         }
         return "redirect:/admin/advisor-applications";

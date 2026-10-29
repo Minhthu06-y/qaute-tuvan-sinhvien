@@ -12,7 +12,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import vn.iotstar.enums.AdvisorApplicationStatus;
@@ -56,25 +55,14 @@ public class AdvisorApplication {
     @ManyToOne(fetch = FetchType.EAGER)
     private User reviewer;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "manager_reviewer_id")
-    private User managerReviewer;
-
     @Nationalized
     @Column(columnDefinition = "nvarchar(max)")
     private String reviewNote;
-
-    @Nationalized
-    @Column(name = "manager_review_note", columnDefinition = "nvarchar(max)")
-    private String managerReviewNote;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime reviewedAt;
-
-    @Column(name = "manager_reviewed_at")
-    private LocalDateTime managerReviewedAt;
 
     public Long getId() { return id; }
     public User getApplicant() { return applicant; }
@@ -93,16 +81,10 @@ public class AdvisorApplication {
     public void setStatus(AdvisorApplicationStatus status) { this.status = status; }
     public User getReviewer() { return reviewer; }
     public void setReviewer(User reviewer) { this.reviewer = reviewer; }
-    public User getManagerReviewer() { return managerReviewer; }
-    public void setManagerReviewer(User managerReviewer) { this.managerReviewer = managerReviewer; }
     public String getReviewNote() { return reviewNote; }
     public void setReviewNote(String reviewNote) { this.reviewNote = reviewNote; }
-    public String getManagerReviewNote() { return managerReviewNote; }
-    public void setManagerReviewNote(String managerReviewNote) { this.managerReviewNote = managerReviewNote; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
-    public LocalDateTime getManagerReviewedAt() { return managerReviewedAt; }
-    public void setManagerReviewedAt(LocalDateTime managerReviewedAt) { this.managerReviewedAt = managerReviewedAt; }
 }

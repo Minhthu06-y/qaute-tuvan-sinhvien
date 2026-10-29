@@ -105,11 +105,8 @@ public class AdvisorApplicationService {
         User applicant = application.getApplicant();
         if (applicant.getRole() != Role.USER)
             throw new FieldException("decision", "Tài khoản không còn đủ điều kiện làm tư vấn viên");
-        application.setManagerReviewer(reviewer);
-        application.setManagerReviewNote("Manager đã duyệt hồ sơ và chuyển admin cấp quyền.");
-        application.setManagerReviewedAt(LocalDateTime.now());
-        application.setStatus(AdvisorApplicationStatus.MANAGER_APPROVED);
-        applications.save(application);
+        finish(application, reviewer, AdvisorApplicationStatus.MANAGER_APPROVED,
+                "Manager đã duyệt hồ sơ và chuyển admin cấp quyền.");
         notifications.notifyAdmins("advisor-application",
                 "Manager đã duyệt hồ sơ tư vấn viên; đang chờ admin cấp quyền.",
                 "/admin/advisor-applications");
@@ -125,11 +122,7 @@ public class AdvisorApplicationService {
         AdvisorApplication application = getForReviewer(id, reviewer, AdvisorApplicationStatus.PENDING);
         if (note == null || note.isBlank())
             throw new FieldException("reviewNote", "Nhập lý do từ chối để người gửi biết cần bổ sung gì");
-        application.setManagerReviewer(reviewer);
-        application.setManagerReviewNote(note.trim());
-        application.setManagerReviewedAt(LocalDateTime.now());
-        application.setStatus(AdvisorApplicationStatus.REJECTED);
-        applications.save(application);
+        finish(application, reviewer, AdvisorApplicationStatus.REJECTED, note.trim());
         notifications.notify(application.getApplicant(), "Yêu cầu làm tư vấn viên chưa được duyệt: " + note.trim(),
                 "/advisor-application");
         logs.log(reviewer.getEmail(), reviewer.getRole().name(), "MANAGER_REJECT_ADVISOR_APPLICATION", application.getApplicant().getEmail());
